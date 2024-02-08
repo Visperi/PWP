@@ -1,10 +1,5 @@
-from flask import Flask
-from flask_sqlalchemy import SQLAlchemy
+from ranking_api.extensions import db
 
-app = Flask(__name__)
-app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///database.db"
-app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
-db = SQLAlchemy(app)
 
 class Player(db.Model):
     __tablename__ = "players"
@@ -12,6 +7,7 @@ class Player(db.Model):
     num_of_matches = db.Column(db.Integer, default=0, nullable=False)
     rating = db.Column(db.Integer, default=1000, nullable=False)
     matches = db.relationship("MatchPlayerRelation", back_populates="player", lazy='select')
+
 
 class Match(db.Model):
     __tablename__ = "matches"
@@ -25,11 +21,12 @@ class Match(db.Model):
     team2_score = db.Column(db.Integer, default=0)
     players = db.relationship('MatchPlayerRelation', back_populates='match', lazy='select')
 
+
 class MatchPlayerRelation(db.Model):
     __tablename__ = "match_player_relation"
-    username = db.Column(db.String(32), db.ForeignKey("players.username", ondelete='CASCADE'), nullable=False, primary_key=True)
+    username = db.Column(db.String(32), db.ForeignKey("players.username", ondelete='CASCADE'), nullable=False,
+                         primary_key=True)
     match_id = db.Column(db.Integer, db.ForeignKey("matches.id", ondelete='CASCADE'), nullable=False, primary_key=True)
     team = db.Column(db.Integer, nullable=False)
     player = db.relationship("Player", back_populates="matches")
     match = db.relationship("Match", back_populates="players")
-    
