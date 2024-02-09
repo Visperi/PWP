@@ -28,5 +28,6 @@ class MatchPlayerRelation(db.Model):
                          primary_key=True)
     match_id = db.Column(db.Integer, db.ForeignKey("matches.id", ondelete='CASCADE'), nullable=False, primary_key=True)
     team = db.Column(db.Integer, nullable=False)
+
     player = db.relationship("Player", back_populates="matches")
     match = db.relationship("Match", back_populates="players")
