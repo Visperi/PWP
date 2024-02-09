@@ -40,6 +40,8 @@ This project uses SQLite for database operations, and requires SQLite 3.7.15 or 
 
 ### Setup SQLite
 
+Official page for SQLite source and binaries: https://www.sqlite.org/download.html
+
 #### Linux
 
 1. Update package list: `sudo apt-get update`
