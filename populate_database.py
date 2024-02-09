@@ -98,13 +98,3 @@ if __name__ == "__main__":
             db.session.add(match)
 
         db.session.commit()
-
-
-    # with app.app_context():
-    #     for match in matches:
-    #         # match.players.append(random.choice(players))
-    #         rel = MatchPlayerRelation(team=1)
-    #         rel.player = random.choice(all_players)
-    #         match.players.append(rel)
-    #         db.session.add(match)
-    #     db.session.commit()
