@@ -66,6 +66,10 @@ def generate_match() -> Match:
 if __name__ == "__main__":
     num_matches = 8
     num_players = 20
+    team_size = 8
+
+    if num_players < team_size:
+        raise ValueError("Team size must be equal or greater than player amount")
 
     app = create_app()
     matches = [generate_match() for _ in range(num_matches)]
@@ -76,7 +80,7 @@ if __name__ == "__main__":
             team1 = []
             team2 = []
 
-            for player in random.sample(all_players, k=6):
+            for player in random.sample(all_players, k=team_size):
                 # Fill teams randomly but evenly
                 if len(team1) != 3 and len(team2) != 3:
                     team = random.randint(1, 2)
