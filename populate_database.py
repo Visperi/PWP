@@ -66,10 +66,11 @@ def generate_match() -> Match:
 if __name__ == "__main__":
     num_matches = 8
     num_players = 20
-    team_size = 8
+    team_size = 3
 
-    if num_players < team_size:
-        raise ValueError("Player amount must be equal or greater than team size to generate dummy data")
+    if num_players < team_size * 2:
+        raise ValueError(f"There must be at least {team_size * 2} amount of unique players to generate dummy data for "
+                         f"teams of size {team_size}")
 
     app = create_app()
     matches = [generate_match() for _ in range(num_matches)]
@@ -80,7 +81,7 @@ if __name__ == "__main__":
             team1 = []
             team2 = []
 
-            for player in random.sample(all_players, k=team_size):
+            for player in random.sample(all_players, k=team_size*2):
                 # Fill teams randomly but evenly
                 if len(team1) != 3 and len(team2) != 3:
                     team = random.randint(1, 2)
