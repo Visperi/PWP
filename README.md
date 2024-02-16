@@ -28,7 +28,7 @@ use `wsgi.py`:
 
 ### For development
 
-Run `wsgi.py` as the main module or call `flask --app "wsgi:create_app() run --debug"`
+Run `wsgi.py` as the main module or call `flask --app "wsgi:create_app()" run --debug`
 
 ### For production
 
