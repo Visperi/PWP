@@ -69,7 +69,7 @@ if __name__ == "__main__":
     team_size = 8
 
     if num_players < team_size:
-        raise ValueError("Team size must be equal or greater than player amount")
+        raise ValueError("Player amount must be equal or greater than team size to generate dummy data")
 
     app = create_app()
     matches = [generate_match() for _ in range(num_matches)]
