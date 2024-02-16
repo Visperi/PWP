@@ -13,7 +13,7 @@ class Match(db.Model):
     __tablename__ = "matches"
     id = db.Column(db.Integer, primary_key=True, unique=True, nullable=False)
     location = db.Column(db.String(50), nullable=False)
-    time = db.Column(db.Integer, nullable=False)
+    time = db.Column(db.DateTime, nullable=False)
     description = db.Column(db.String(100))
     status = db.Column(db.Integer, default=0, nullable=False)
     rating_shift = db.Column(db.Integer)

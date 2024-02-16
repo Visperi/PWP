@@ -1,6 +1,6 @@
 import string
 import random
-import time
+from datetime import datetime
 
 from wsgi import create_app
 from ranking_api.extensions import db
@@ -47,7 +47,7 @@ def generate_match() -> Match:
     :return: A match model object.
     """
     location = _generate_string(50)
-    timestamp = time.time()
+    timestamp = datetime.utcnow()
     description = random.choice([None, _generate_string(100)])
     status = random.randint(0, 2)
     rating_shift = random.randint(1, 50)
