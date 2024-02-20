@@ -8,7 +8,7 @@ from .extensions import (
     db,
     api
 )
-from resources.player import (
+from .resources.player import (
     PlayerConverter,
     PlayerCollection,
     PlayerItem
