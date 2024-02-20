@@ -9,7 +9,7 @@ class Player(db.Model):
     matches = db.relationship("MatchPlayerRelation", back_populates="player", lazy='select')
 
     @staticmethod
-    def validate_schema() -> dict:
+    def json_schema() -> dict:
         schema = {
             "type": "object"
         }

@@ -34,7 +34,7 @@ class PlayerCollection(Resource):
             raise UnsupportedMediaType
 
         try:
-            validate(request.json, Player.validate_schema())
+            validate(request.json, Player.json_schema())
         except ValidationError as e:
             raise BadRequest(description=str(e))
 
