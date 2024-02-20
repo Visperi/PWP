@@ -4,7 +4,15 @@ App factory module for creating the application.
 
 from flask import Flask
 
-from .extensions import db
+from .extensions import (
+    db,
+    api
+)
+from resources.player import (
+    PlayerConverter,
+    PlayerCollection,
+    PlayerItem
+)
 
 
 def create_app() -> Flask:
@@ -17,6 +25,8 @@ def create_app() -> Flask:
     app = Flask(__name__.split(".")[0])
     app.config.from_object("config.Config")
 
+    register_converters(app)
+    register_resources()
     register_extensions(app)
 
     # Create tables if they do not exist yet
@@ -24,6 +34,25 @@ def create_app() -> Flask:
         db.create_all()
 
     return app
+
+
+def register_converters(app: Flask):
+    """
+    Register converters for resources.
+
+    :param app: The main Flask application
+    """
+    app.url_map.converters["player"] = PlayerConverter
+
+
+def register_resources():
+    """
+    Register resources and their routing for the Flask API.
+    """
+
+    # TODO: Implement the resource urls
+    api.add_resource(PlayerCollection, "/api/")
+    api.add_resource(PlayerItem, "/api/")
 
 
 def register_extensions(app: Flask):
@@ -34,3 +63,4 @@ def register_extensions(app: Flask):
     """
 
     db.init_app(app)
+    api.init_app(app)
