@@ -4,6 +4,8 @@ place for all needed modules. Objects instantiated here must call init_app metho
 them.
 """
 from flask_sqlalchemy import SQLAlchemy
+from flask_restful import Api
 
 
 db = SQLAlchemy()
+api = Api()

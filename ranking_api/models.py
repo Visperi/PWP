@@ -8,6 +8,16 @@ class Player(db.Model):
     rating = db.Column(db.Integer, default=1000, nullable=False)
     matches = db.relationship("MatchPlayerRelation", back_populates="player", lazy='select')
 
+    @staticmethod
+    def json_schema() -> dict:
+        schema = {
+            "type": "object"
+        }
+        properties = {}
+
+        schema.update(properties=properties)
+        return schema
+
 
 class Match(db.Model):
     __tablename__ = "matches"
