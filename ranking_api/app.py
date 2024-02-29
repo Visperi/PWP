@@ -14,6 +14,12 @@ from .resources.player import (
     PlayerItem
 )
 
+from .resources.match import (
+    MatchConverter,
+    MatchCollection,
+    MatchItem
+)
+
 
 def create_app() -> Flask:
     """
@@ -43,6 +49,7 @@ def register_converters(app: Flask):
     :param app: The main Flask application
     """
     app.url_map.converters["player"] = PlayerConverter
+    app.url_map.converters["match"] = MatchConverter
 
 
 def register_resources():
@@ -53,6 +60,9 @@ def register_resources():
     # TODO: Implement the resource urls
     api.add_resource(PlayerCollection, "/api/")
     api.add_resource(PlayerItem, "/api/")
+    
+    api.add_resource(MatchCollection, "/api/")
+    api.add_resource(MatchItem, "/api/")
 
 
 def register_extensions(app: Flask):
