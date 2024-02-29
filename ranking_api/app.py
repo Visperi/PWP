@@ -58,9 +58,9 @@ def register_resources():
     """
 
     # TODO: Implement the resource urls
-    api.add_resource(PlayerCollection, "/api/")
-    api.add_resource(PlayerItem, "/api/")
-    
+    api.add_resource(PlayerCollection, "/api/players/")
+    api.add_resource(PlayerItem, "/api/players/<player:player>/")
+
     api.add_resource(MatchCollection, "/api/")
     api.add_resource(MatchItem, "/api/")
 

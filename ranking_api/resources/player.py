@@ -13,20 +13,24 @@ from jsonschema import validate, ValidationError
 
 from ranking_api.extensions import api, db
 from ranking_api.models import Player
+from .utils import str_to_bool
 
 
 class PlayerItem(Resource):
 
     @staticmethod
-    def get() -> Player:
-        pass
+    def get(player: Player) -> dict:
+        return player.serialize()
 
 
 class PlayerCollection(Resource):
 
     @staticmethod
     def get():
-        pass
+        exclude_matches = request.args.get("exclude_matches", default=False, type=str_to_bool)
+
+        players = Player.query.all()
+        return [player.serialize(exclude_matches=exclude_matches) for player in players]
 
     @staticmethod
     def post():
@@ -56,7 +60,7 @@ class PlayerCollection(Resource):
 class PlayerConverter(BaseConverter):
 
     def to_python(self, value: str) -> Player:
-        player = Player.query(username=value).first()
+        player = Player.query.filter_by(username=value).first()
         if player is None:
             raise NotFound
         return player
