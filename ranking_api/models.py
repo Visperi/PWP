@@ -10,6 +10,7 @@ class Player(db.Model):
 
     @staticmethod
     def json_schema() -> dict:
+        # TODO: Finish this schema
         schema = {
             "type": "object"
         }
