@@ -32,6 +32,22 @@ class Match(db.Model):
     team2_score = db.Column(db.Integer, default=0)
     players = db.relationship('MatchPlayerRelation', back_populates='match', lazy='select')
 
+    @staticmethod
+    def json_schema() -> dict:
+        # TODO: Finish this schema
+        pass
+
+    def deserialize(self, data):
+        self.id = data.get('id')
+        self.location = data.get('location')
+        self.time = data.get('time')
+        self.description = data.get('description')
+        self.status = data.get('status')
+        self.rating_shift = data.get('rating_shift')
+        self.team1_score = data.get('team1_score')
+        self.team2_score = data.get('team2_score')
+        self.players = data.get('players')
+
 
 class MatchPlayerRelation(db.Model):
     __tablename__ = "match_player_relation"
