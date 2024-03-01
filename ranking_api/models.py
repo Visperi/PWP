@@ -63,7 +63,7 @@ class Match(db.Model):
         self.team2_score = data.get('team2_score')
         self.players = data.get('players')
 
-    def serialize(self, exclude_players: bool = False) -> dict:
+    def serialize(self, include_players: bool = True) -> dict:
         ret = dict(id=self.id,
                    location=self.location,
                    timestamp=str(self.time),
@@ -73,7 +73,7 @@ class Match(db.Model):
                    team1_score=self.team1_score,
                    team2_score=self.team2_score)
 
-        if not exclude_players:
+        if include_players:
             ret.update(players=[player.serialize() for player in self.players])
 
         return ret
@@ -96,7 +96,7 @@ class MatchPlayerRelation(db.Model):
         :return: Match data serialized and combined with team data.
         """
 
-        match_data = self.match.serialize(exclude_players=True)
+        match_data = self.match.serialize(include_players=False)
         match_data.update(team=self.team)
         return match_data
 
