@@ -7,7 +7,8 @@ from werkzeug.routing import BaseConverter
 from werkzeug.exceptions import (
     NotFound,
     BadRequest,
-    UnsupportedMediaType
+    UnsupportedMediaType,
+    NotImplemented
 )
 from jsonschema import validate, ValidationError
 
@@ -26,6 +27,11 @@ class MatchItem(Resource):
         db.session.delete(match)
         db.session.commit()
         return Response(status=204)
+
+    @staticmethod
+    def post(match: Match):
+        # TODO: Implement to support updating match data
+        raise NotImplemented
 
 
 class MatchCollection(Resource):

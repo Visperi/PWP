@@ -8,7 +8,8 @@ from werkzeug.exceptions import (
     NotFound,
     BadRequest,
     UnsupportedMediaType,
-    Conflict
+    Conflict,
+    NotImplemented
 )
 from jsonschema import validate, ValidationError
 from sqlalchemy.exc import IntegrityError
@@ -29,6 +30,11 @@ class PlayerItem(Resource):
         db.session.delete(player)
         db.session.commit()
         return Response(status=204)
+
+    @staticmethod
+    def post(player: Player):
+        # TODO: Implement to support updating player data
+        raise NotImplemented
 
 
 class PlayerCollection(Resource):
