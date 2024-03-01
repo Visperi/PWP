@@ -2,6 +2,8 @@
 Utility module for processing HTTP methods for resources.
 """
 
+from datetime import datetime
+
 from werkzeug.exceptions import BadRequest
 
 
@@ -21,3 +23,18 @@ def str_to_bool(value: str) -> bool:
         return False
     else:
         raise BadRequest(description="Bad query parameter")
+
+
+def ts_to_datetime(timestamp: str) -> datetime:
+    """
+    Convert an ISO8601 timestamp to datetime object or raise an exception if it is not in correct format.
+    The timestamp must not have any timezone information.
+
+    :param timestamp: The timestamp
+    :return: The timestamp converted to datetime object
+    :raises BadRequest: If the timestamp is in incorrect format.
+    """
+    try:
+        return datetime.fromisoformat(timestamp)
+    except ValueError:
+        raise BadRequest("Bad datetime format")
