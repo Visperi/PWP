@@ -57,12 +57,11 @@ def register_resources():
     Register resources and their routing for the Flask API.
     """
 
-    # TODO: Implement the resource urls
     api.add_resource(PlayerCollection, "/api/players/")
     api.add_resource(PlayerItem, "/api/players/<player:player>/")
 
-    api.add_resource(MatchCollection, "/api/")
-    api.add_resource(MatchItem, "/api/")
+    api.add_resource(MatchCollection, "/api/matches/")
+    api.add_resource(MatchItem, "/api/matches/<match:match>/")
 
 
 def register_extensions(app: Flask):
