@@ -14,11 +14,13 @@ from jsonschema import validate, ValidationError
 from ranking_api.extensions import api, db
 from ranking_api.models import Match
 
+
 class MatchItem(Resource):
 
     @staticmethod
     def get() -> Match:
         pass
+
 
 class MatchCollection(Resource):
     @staticmethod
@@ -56,9 +58,10 @@ class MatchCollection(Resource):
 
         return Response(status=201, headers=dict(Location=resource_url))
 
+
 class MatchConverter(BaseConverter):
     def to_python(self, value: str) -> Match:
-        match = Match.query(id=value).first()
+        match = Match.query.filter_by(id=value).first()
         if match is None:
             raise NotFound
         return match
