@@ -26,7 +26,6 @@ class PlayerItem(Resource):
 
     @staticmethod
     def delete(player: Player):
-        # TODO: Implement this
         db.session.delete(player)
         db.session.commit()
         return Response(status=204)
