@@ -1,4 +1,3 @@
-
 from ranking_api.extensions import db
 
 
@@ -20,14 +19,17 @@ class Player(db.Model):
         schema.update(properties=properties)
         return schema
 
-    # TODO: Implement deserialization
+    def deserialize(self, data: dict):
+        self.username = data["username"]
+        self.num_of_matches = data.get("num_of_matches", 0)
+        self.rating = data.get("rating", 1000)
 
-    def serialize(self, exclude_matches: bool = False) -> dict:
+    def serialize(self, include_matches: bool = True) -> dict:
         ret = dict(username=self.username,
                    num_of_matches=self.num_of_matches,
                    rating=self.rating)
 
-        if not exclude_matches:
+        if include_matches:
             ret.update(matches=[match.serialize_match() for match in self.matches])
 
         return ret
@@ -105,6 +107,6 @@ class MatchPlayerRelation(db.Model):
         :return: Player data serialized and combined with team data.
         """
 
-        player_data = self.player.serialize(exclude_matches=True)
+        player_data = self.player.serialize(include_matches=False)
         player_data.update(team=self.team)
         return player_data
