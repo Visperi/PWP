@@ -74,7 +74,7 @@ class Match(db.Model):
                    team2_score=self.team2_score)
 
         if include_players:
-            ret.update(players=[player.serialize() for player in self.players])
+            ret.update(players=[player.serialize_player() for player in self.players])
 
         return ret
 
@@ -91,7 +91,7 @@ class MatchPlayerRelation(db.Model):
 
     def serialize_match(self) -> dict:
         """
-        Serialize match data out of MatchPlayerRelation data and combine it with team satellite data.
+        Serialize relation data from players perspective and combine it with team satellite data.
 
         :return: Match data serialized and combined with team data.
         """
@@ -102,7 +102,7 @@ class MatchPlayerRelation(db.Model):
 
     def serialize_player(self) -> dict:
         """
-        Serialize player data out of MatchPlayerRelation data and combine it with team satellite data.
+        Serialize relation data from matches perspective and combine it with team satellite data.
 
         :return: Player data serialized and combined with team data.
         """
