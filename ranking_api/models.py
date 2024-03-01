@@ -11,11 +11,23 @@ class Player(db.Model):
 
     @staticmethod
     def json_schema() -> dict:
-        # TODO: Finish this schema
         schema = {
-            "type": "object"
+            "type": "object",
+            "required": ["username"]
         }
         properties = {}
+        properties["username"] = {
+            "description": "The users' name",
+            "type": "string"
+        }
+        properties["num_of_matches"] = {
+            "description": "Number of played matches",
+            "type": "number"
+        }
+        properties["rating"] = {
+            "description": "Current rating of the player",
+            "type": "number"
+        }
 
         schema.update(properties=properties)
         return schema
