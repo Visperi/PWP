@@ -19,6 +19,21 @@ class Player(db.Model):
         schema.update(properties=properties)
         return schema
 
+    def deserialize(self, data: dict):
+        self.username = data["username"]
+        self.num_of_matches = data.get("num_of_matches", 0)
+        self.rating = data.get("rating", 1000)
+
+    def serialize(self, include_matches: bool = True) -> dict:
+        ret = dict(username=self.username,
+                   num_of_matches=self.num_of_matches,
+                   rating=self.rating)
+
+        if include_matches:
+            ret.update(matches=[match.serialize_match() for match in self.matches])
+
+        return ret
+
 
 class Match(db.Model):
     __tablename__ = "matches"
@@ -48,6 +63,21 @@ class Match(db.Model):
         self.team2_score = data.get('team2_score')
         self.players = data.get('players')
 
+    def serialize(self, include_players: bool = True) -> dict:
+        ret = dict(id=self.id,
+                   location=self.location,
+                   timestamp=str(self.time),
+                   description=self.description,
+                   status=self.status,
+                   rating_shift=self.rating_shift,
+                   team1_score=self.team1_score,
+                   team2_score=self.team2_score)
+
+        if include_players:
+            ret.update(players=[player.serialize() for player in self.players])
+
+        return ret
+
 
 class MatchPlayerRelation(db.Model):
     __tablename__ = "match_player_relation"
@@ -58,3 +88,25 @@ class MatchPlayerRelation(db.Model):
 
     player = db.relationship("Player", back_populates="matches")
     match = db.relationship("Match", back_populates="players")
+
+    def serialize_match(self) -> dict:
+        """
+        Serialize match data out of MatchPlayerRelation data and combine it with team satellite data.
+
+        :return: Match data serialized and combined with team data.
+        """
+
+        match_data = self.match.serialize(include_players=False)
+        match_data.update(team=self.team)
+        return match_data
+
+    def serialize_player(self) -> dict:
+        """
+        Serialize player data out of MatchPlayerRelation data and combine it with team satellite data.
+
+        :return: Player data serialized and combined with team data.
+        """
+
+        player_data = self.player.serialize(include_matches=False)
+        player_data.update(team=self.team)
+        return player_data

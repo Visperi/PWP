@@ -7,26 +7,39 @@ from werkzeug.routing import BaseConverter
 from werkzeug.exceptions import (
     NotFound,
     BadRequest,
-    UnsupportedMediaType
+    UnsupportedMediaType,
+    Conflict
 )
 from jsonschema import validate, ValidationError
+from sqlalchemy.exc import IntegrityError
 
 from ranking_api.extensions import api, db
 from ranking_api.models import Player
+from .utils import str_to_bool
 
 
 class PlayerItem(Resource):
 
     @staticmethod
-    def get() -> Player:
-        pass
+    def get(player: Player) -> dict:
+        return player.serialize()
+
+    @staticmethod
+    def delete(player: Player):
+        db.session.delete(player)
+        db.session.commit()
+        return Response(status=204)
 
 
 class PlayerCollection(Resource):
 
     @staticmethod
     def get():
-        pass
+        # Parse possible query parameter for including or excluding matches for players
+        include_matches = request.args.get("include_matches", default=True, type=str_to_bool)
+
+        players = Player.query.all()
+        return [player.serialize(include_matches=include_matches) for player in players]
 
     @staticmethod
     def post():
@@ -38,25 +51,26 @@ class PlayerCollection(Resource):
         except ValidationError as e:
             raise BadRequest(description=str(e))
 
-        data = dict(num_of_matches=request.json["num_of_matches"],
-                    rating=request.json["rating"])
+        data = dict(username=request.json["username"],
+                    num_of_matches=request.json.get("num_of_matches"),
+                    rating=request.json.get("rating"))
         player = Player()
         player.deserialize(data)
 
-        db.session.add(player)
-        db.session.commit()
+        try:
+            db.session.add(player)
+            db.session.commit()
+        except IntegrityError:
+            raise Conflict(description=f"Player with username {player.username} already exists")
 
-        # TODO: Update this when the resource urls are designed
-        resource_url = api.url_for(PlayerItem,
-                                   player=player)
-
+        resource_url = api.url_for(PlayerItem, player=player)
         return Response(status=201, headers=dict(Location=resource_url))
 
 
 class PlayerConverter(BaseConverter):
 
     def to_python(self, value: str) -> Player:
-        player = Player.query(username=value).first()
+        player = Player.query.filter_by(username=value).first()
         if player is None:
             raise NotFound
         return player

@@ -1,1 +1,3 @@
-from . import player
+"""
+Module for resources in the Ranking API
+"""
