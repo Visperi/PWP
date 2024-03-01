@@ -8,8 +8,7 @@ from werkzeug.exceptions import (
     NotFound,
     BadRequest,
     UnsupportedMediaType,
-    Conflict,
-    NotImplemented
+    Conflict
 )
 from jsonschema import validate, ValidationError
 from sqlalchemy.exc import IntegrityError
@@ -28,7 +27,9 @@ class PlayerItem(Resource):
     @staticmethod
     def delete(player: Player):
         # TODO: Implement this
-        raise NotImplemented
+        db.session.delete(player)
+        db.session.commit()
+        return Response(status=204)
 
 
 class PlayerCollection(Resource):
