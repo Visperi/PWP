@@ -31,7 +31,8 @@ class MatchItem(Resource):
 class MatchCollection(Resource):
     @staticmethod
     def get():
-        pass
+        matches = Match.query.all()
+        return [match.serialize() for match in matches]
 
     @staticmethod
     def post():
