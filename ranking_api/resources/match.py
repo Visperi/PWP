@@ -18,8 +18,14 @@ from ranking_api.models import Match
 class MatchItem(Resource):
 
     @staticmethod
-    def get() -> Match:
-        pass
+    def get(match: Match) -> dict:
+        return match.serialize()
+
+    @staticmethod
+    def delete(match: Match):
+        db.session.delete(match)
+        db.session.commit()
+        return Response(status=204)
 
 
 class MatchCollection(Resource):
@@ -27,6 +33,7 @@ class MatchCollection(Resource):
     def get():
         pass
 
+    @staticmethod
     def post():
         if not request.json:
             raise UnsupportedMediaType
