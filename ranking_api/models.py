@@ -1,4 +1,5 @@
-from ranking_api.extensions import db
+from .extensions import db
+from .resources.utils import ts_to_datetime
 
 
 class Player(db.Model):
@@ -50,18 +51,22 @@ class Match(db.Model):
     @staticmethod
     def json_schema() -> dict:
         # TODO: Finish this schema
-        pass
+        schema = {
+            "type": "object"
+        }
+        properties = {}
+
+        schema.update(properties=properties)
+        return schema
 
     def deserialize(self, data):
-        self.id = data.get('id')
         self.location = data.get('location')
-        self.time = data.get('time')
+        self.time = ts_to_datetime(data.get('time'))  # Convert to datetime or raise BadRequest exception
         self.description = data.get('description')
         self.status = data.get('status')
         self.rating_shift = data.get('rating_shift')
         self.team1_score = data.get('team1_score')
         self.team2_score = data.get('team2_score')
-        self.players = data.get('players')
 
     def serialize(self, include_players: bool = True) -> dict:
         ret = dict(id=self.id,
