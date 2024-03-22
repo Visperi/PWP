@@ -19,7 +19,7 @@ class Player(db.Model):
             "username": {
                 "description": "The users' name",
                 "type": "string",
-                "minLength": 0,
+                "minLength": 1,
                 "maxLength": 32
             },
             "num_of_matches": {
