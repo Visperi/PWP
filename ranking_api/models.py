@@ -15,19 +15,23 @@ class Player(db.Model):
             "type": "object",
             "required": ["username"]
         }
-        properties = {}
-        properties["username"] = {
-            "description": "The users' name",
-            "type": "string"
-        }
-        properties["num_of_matches"] = {
-            "description": "Number of played matches",
-            "type": "number"
-        }
-        properties["rating"] = {
-            "description": "Current rating of the player",
-            "type": "number"
-        }
+        properties = {
+            "username": {
+                "description": "The users' name",
+                "type": "string",
+                "minLength": 0,
+                "maxLength": 32
+            },
+            "num_of_matches": {
+                "description": "Number of played matches",
+                "type": "integer",
+                "minimum": 0
+            },
+            "rating": {
+                "description": "Current rating of the player",
+                "type": "integer",
+                "minimum": 0
+            }}
 
         schema.update(properties=properties)
         return schema
@@ -62,11 +66,50 @@ class Match(db.Model):
 
     @staticmethod
     def json_schema() -> dict:
-        # TODO: Finish this schema
         schema = {
-            "type": "object"
+            "type": "object",
+            "required": ["location", "time"]
         }
-        properties = {}
+        properties = {
+            "location": {
+                "description": "Physical location of the game",
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 50
+            },
+            "time": {
+                "description": "UTC timestamp for the game starting time",
+                "type": "date-time"
+            },
+            "description": {
+                "description": "Optional description, e.g. hashtag for the game",
+                "type": "string",
+                "maxLength": 100
+            },
+            "status": {
+                "description": "On-going status of the game",
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 2
+            },
+            "rating_shift": {
+                "description": "Rating shift for the teams after finishing the game. Negative for losing team.",
+                "anyOf": [
+                    {"type": "null"},
+                    {"type": "integer", "minimum": 0}
+                ]
+            },
+            "team1_score": {
+                "description": "Team 1 score in the game",
+                "type": "integer",
+                "minimum": 0
+            },
+            "team2_score": {
+                "description": "Team 2 score in the game",
+                "type": "integer",
+                "minimum": 0
+            }
+        }
 
         schema.update(properties=properties)
         return schema
