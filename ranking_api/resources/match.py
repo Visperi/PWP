@@ -10,7 +10,11 @@ from werkzeug.exceptions import (
     UnsupportedMediaType,
     NotImplemented
 )
-from jsonschema import validate, ValidationError
+from jsonschema import (
+    validate,
+    ValidationError,
+    draft7_format_checker
+)
 
 from ranking_api.extensions import api, db
 from ranking_api.models import Match
@@ -46,7 +50,7 @@ class MatchCollection(Resource):
             raise UnsupportedMediaType
 
         try:
-            validate(request.json, Match.json_schema())
+            validate(request.json, Match.json_schema(), format_checker=draft7_format_checker)
         except ValidationError as e:
             raise BadRequest(description=str(e))
 
