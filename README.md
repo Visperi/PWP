@@ -1,4 +1,4 @@
-# PWP SPRING 2024
+# PWP SPRING 2025
 # Ranking API
 # Group information
 * Student 1. Rainer Laaksonen  Rainer.Laaksonen@oulu.fi
