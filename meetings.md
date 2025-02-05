@@ -1,6 +1,6 @@
 # Meetings notes
 
-## Meeting 1.
+## Meeting 1. (2024)
 * **DATE:** 31.1.2024
 * **ASSISTANTS:** Mika Oja
 
@@ -13,9 +13,7 @@
 - Better specify the concepts and motivations of the project.
 
 
-
-
-## Meeting 2.
+## Meeting 2. (2024)
 * **DATE:** 14.2.2024
 * **ASSISTANTS:** Mika Oja
 
@@ -34,7 +32,22 @@ cascade may work in raw SQLite commands but not in Flask-SQLAlchemy.
 - Define foreign key behavior also in `Match` and `Player` models to correct cascade behavior
 
 
+## Meeting 1.
+* **DATE:** 29.1.2025
+* **ASSISTANTS:** Iván Sanchez Milara
 
+### Minutes
+- Need to clarify certain aspects in the description. Concept diagram now ok.
+
+### Action points
+- Clarify motivation for 1. Api overview. Specify the initial implementation (is it for chess or something else)
+- Clarify what ELO and ranking are and what their relation to each other are in 2. Main concepts.
+- Specify the motivation and example user base for the application in part 3. api uses.
+- Justify why FACEIT api is a RESTful api
+
+## Meeting 2.
+* **DATE:** 
+* **ASSISTANTS:** 
 
 ## Meeting 3.
 * **DATE:**
