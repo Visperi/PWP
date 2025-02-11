@@ -46,8 +46,16 @@ cascade may work in raw SQLite commands but not in Flask-SQLAlchemy.
 - Justify why FACEIT api is a RESTful api
 
 ## Meeting 2.
-* **DATE:** 
-* **ASSISTANTS:** 
+* **DATE:** 11.2.2025
+* **ASSISTANTS:** Iván Sanchez Milara
+
+### Minutes
+- Current database implementation is good enough for this project 
+
+### Action points
+- Should make an implementation to avoid invalid team values in database (non- 1 or 2)
+- Update dependencies to versions more relevant to this year and check that everything works
+- Review requirements for the next deadline (3. api implementation)
 
 ## Meeting 3.
 * **DATE:**
