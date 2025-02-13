@@ -1,8 +1,14 @@
+"""
+Model definitions for the api database
+"""
 from .extensions import db
 from .resources.utils import ts_to_datetime
 
 
 class Player(db.Model):
+    """
+    Player database model class
+    """
     __tablename__ = "players"
     username = db.Column(db.String(32), primary_key=True, nullable=False, unique=True)
     num_of_matches = db.Column(db.Integer, default=0, nullable=False)
@@ -11,6 +17,9 @@ class Player(db.Model):
 
     @staticmethod
     def json_schema() -> dict:
+        """
+        JSON schema for player model
+        """
         schema = {
             "type": "object",
             "required": ["username"]
@@ -37,14 +46,22 @@ class Player(db.Model):
         return schema
 
     def deserialize(self, data: dict):
+        """
+        Deserialization method for user data
+        """
         self.username = data["username"]
         self.num_of_matches = data.get("num_of_matches", 0)
         self.rating = data.get("rating", 1000)
 
     def serialize(self, include_matches: bool = True) -> dict:
-        ret = dict(username=self.username,
-                   num_of_matches=self.num_of_matches,
-                   rating=self.rating)
+        """
+        Serialization method for user data
+
+        :return: User data serialized
+        """
+        ret = {"username": self.username,
+               "num_of_matches": self.num_of_matches,
+               "rating": self.rating}
 
         if include_matches:
             ret.update(matches=[match.serialize_match() for match in self.matches])
@@ -53,6 +70,9 @@ class Player(db.Model):
 
 
 class Match(db.Model):
+    """
+    Match database model class
+    """
     __tablename__ = "matches"
     id = db.Column(db.Integer, primary_key=True, unique=True, nullable=False)
     location = db.Column(db.String(50), nullable=False)
@@ -66,6 +86,9 @@ class Match(db.Model):
 
     @staticmethod
     def json_schema() -> dict:
+        """
+        JSON schema for match model
+        """
         schema = {
             "type": "object",
             "required": ["location", "time"]
@@ -93,7 +116,8 @@ class Match(db.Model):
                 "maximum": 2
             },
             "rating_shift": {
-                "description": "Rating shift for the teams after finishing the game. Negative for losing team.",
+                "description": "Rating shift for the teams after finishing the game. \
+                                Negative for losing team.",
                 "anyOf": [
                     {"type": "null"},
                     {"type": "integer", "minimum": 0}
@@ -115,8 +139,11 @@ class Match(db.Model):
         return schema
 
     def deserialize(self, data):
+        """
+        Deserialization method for match data
+        """
         self.location = data.get('location')
-        self.time = ts_to_datetime(data.get('time'))  # Convert to datetime or raise BadRequest exception
+        self.time = ts_to_datetime(data.get('time'))  # Convert to datetime or raise BadRequest
         self.description = data.get('description')
         self.status = data.get('status')
         self.rating_shift = data.get('rating_shift')
@@ -124,14 +151,19 @@ class Match(db.Model):
         self.team2_score = data.get('team2_score')
 
     def serialize(self, include_players: bool = True) -> dict:
-        ret = dict(id=self.id,
-                   location=self.location,
-                   timestamp=str(self.time),
-                   description=self.description,
-                   status=self.status,
-                   rating_shift=self.rating_shift,
-                   team1_score=self.team1_score,
-                   team2_score=self.team2_score)
+        """
+        Serialization method for match data
+
+        :return: Match data serialized
+        """
+        ret = {"id": self.id,
+               "location": self.location,
+               "timestamp": str(self.time),
+               "description": self.description,
+               "status": self.status,
+               "rating_shift": self.rating_shift,
+               "team1_score": self.team1_score,
+               "team2_score": self.team2_score}
 
         if include_players:
             ret.update(players=[player.serialize_player() for player in self.players])
@@ -140,10 +172,19 @@ class Match(db.Model):
 
 
 class MatchPlayerRelation(db.Model):
+    """
+    Relation object model for junction table meant to
+    handle the player/match many-to-many relationship
+    """
     __tablename__ = "match_player_relation"
-    username = db.Column(db.String(32), db.ForeignKey("players.username", ondelete='CASCADE'), nullable=False,
+    username = db.Column(db.String(32),
+                         db.ForeignKey("players.username", ondelete='CASCADE'),
+                         nullable=False,
                          primary_key=True)
-    match_id = db.Column(db.Integer, db.ForeignKey("matches.id", ondelete='CASCADE'), nullable=False, primary_key=True)
+    match_id = db.Column(db.Integer,
+                         db.ForeignKey("matches.id", ondelete='CASCADE'),
+                         nullable=False,
+                         primary_key=True)
     team = db.Column(db.Integer, nullable=False)
 
     player = db.relationship("Player", back_populates="matches")

@@ -28,7 +28,7 @@ def create_app() -> Flask:
     :return: The Flask application with extensions and interfaces registered for use.
     """
 
-    app = Flask(__name__.split(".")[0])
+    app = Flask(__name__.split(".", maxsplit=1)[0])
     app.config.from_object("config.Config")
 
     register_converters(app)

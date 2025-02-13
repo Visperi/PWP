@@ -1,3 +1,7 @@
+"""
+Module for populating the database
+"""
+
 import string
 import random
 from datetime import datetime
@@ -64,31 +68,32 @@ def generate_match() -> Match:
 
 
 if __name__ == "__main__":
-    num_matches = 8
-    num_players = 20
-    team_size = 3
+    NUM_MATCHES = 8
+    NUM_PLAYERS = 20
+    TEAM_SIZE = 3
 
-    if num_players < team_size * 2:
-        raise ValueError(f"There must be at least {team_size * 2} amount of unique players to generate dummy data for "
-                         f"teams of size {team_size}")
+    if NUM_PLAYERS < TEAM_SIZE * 2:
+        raise ValueError(f"There must be at least {TEAM_SIZE * 2} amount of unique players "
+                         f"to generate dummy data for "
+                         f"teams of size {TEAM_SIZE}")
 
     app = create_app()
-    matches = [generate_match() for _ in range(num_matches)]
-    all_players = [generate_player() for _ in range(num_players)]
+    matches = [generate_match() for _ in range(NUM_MATCHES)]
+    all_players = [generate_player() for _ in range(NUM_PLAYERS)]
 
     with app.app_context():
         for match in matches:
             team1 = []
             team2 = []
 
-            for player in random.sample(all_players, k=team_size*2):
+            for player in random.sample(all_players, k=TEAM_SIZE*2):
                 # Fill teams randomly but evenly
                 if len(team1) != 3 and len(team2) != 3:
                     team = random.randint(1, 2)
                 elif len(team1) == 3:
-                    team = 1
+                    team = 1 # pylint: disable=invalid-name
                 else:
-                    team = 2
+                    team = 2 # pylint: disable=invalid-name
 
                 if team == 1:
                     team1.append(player)

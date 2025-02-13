@@ -13,21 +13,22 @@ def str_to_bool(value: str) -> bool:
 
     :param value: The query parameter value
     :return: True if the parameter lowered is 'true' or False if it is 'false'
-    :raises BadRequest: If the parameter value is invalid, i.e. is not strictly a boolean in string format.
+    :raises BadRequest if parameter value is invalid, i.e. not strictly boolean in string format.
     """
     lower = value.lower()
 
     if lower == "true":
         return True
-    elif lower == "false":
+    if lower == "false":
         return False
-    else:
-        raise BadRequest(description="Bad query parameter")
+    raise BadRequest(description="Bad query parameter")
 
 
 def ts_to_datetime(timestamp: str) -> datetime:
     """
-    Convert an ISO8601 timestamp to datetime object or raise an exception if it is not in correct format.
+    Convert an ISO8601 timestamp to datetime object or raise an exception,
+    if it is not in correct format.
+
     The timestamp must not have any timezone information.
 
     :param timestamp: The timestamp
@@ -36,5 +37,5 @@ def ts_to_datetime(timestamp: str) -> datetime:
     """
     try:
         return datetime.fromisoformat(timestamp)
-    except ValueError:
-        raise BadRequest("Bad datetime format")
+    except ValueError as exc:
+        raise BadRequest("Bad datetime format") from exc
