@@ -20,6 +20,11 @@ The minimum Python version supported is 3.8. External library dependencies are:
 The simplest way to install requirements for chosen environment is by command  
 `python -m pip install -r requirements.txt`.
 
+## Linting
+
+This project uses pylint for linting. The configuration mostly follows the default pylint values. 
+To run pylint on the project during development, call `pylint --rcfile=.pylintrc . ranking_api/` **in the project root folder**.
+
 ## Running the application
 
 This application uses factory methods for the server creation. A ready-to-use Flask object for the Ranking API can be 
