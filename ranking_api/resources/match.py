@@ -7,7 +7,7 @@ from flask import (
 )
 from flask_restful import Resource
 from werkzeug.routing import BaseConverter
-from werkzeug.exceptions import ( # pylint: disable=redefined-builtin
+from werkzeug.exceptions import (
     NotFound,
     BadRequest,
     UnsupportedMediaType
