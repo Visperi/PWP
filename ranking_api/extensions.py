@@ -5,7 +5,9 @@ them.
 """
 from flask_sqlalchemy import SQLAlchemy
 from flask_restful import Api
+from flask_httpauth import HTTPTokenAuth
 
 
 db = SQLAlchemy()
 api = Api()
+auth = HTTPTokenAuth(scheme="Bearer")
