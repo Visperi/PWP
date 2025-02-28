@@ -16,7 +16,7 @@ class ApiToken(db.Model):
     __bind_key__ = "secrets"
 
     token = db.Column(db.String(36), primary_key=True)
-    user = db.Column(db.String(32), nullable=False)
+    user = db.Column(db.String(32), nullable=False, unique=True)
     expires_in = db.Column(db.DateTime, nullable=True)
     created_at = db.Column(db.DateTime, nullable=False)
 
