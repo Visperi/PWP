@@ -30,6 +30,10 @@ class Keyring:
             self._tokens[str(dev_token)] = dev_token
             print(f"Your development API token is: {dev_token.token}")
 
+    @staticmethod
+    def __generate_token():
+        return uuid.uuid4()
+
     def __read_persistent_tokens(self):
         """
         Read existing API tokens from database into the keyring.
@@ -54,9 +58,13 @@ class Keyring:
 
         :param user: User to create the API token for.
         :return: The newly created ApiToken object.
+        :raises ValueError: If a token for the user already exists.
         """
-        token = uuid.uuid4()
-        api_token = ApiToken(token=str(token),
+        if ApiToken.query.filter_by(user=user).first():
+            raise ValueError(f"API token for user {user} already exists. Use update_token to "
+                             f"generate a new token for existing ApiToken.")
+
+        api_token = ApiToken(token=str(self.__generate_token()),
                              user=user,
                              expires_in=None,
                              created_at=datetime.now())
@@ -67,6 +75,36 @@ class Keyring:
 
         self._tokens[api_token.token] = api_token
         return api_token
+
+    def update_token(self, user: str) -> ApiToken:
+        """
+        Update an API token for user. If current_app is in debug mode,
+        the token is not saved into database.
+
+        :param user: User to update the API token for.
+        :return: The updated ApiToken object.
+        :raises ValueError: If a token for the user does not exist.
+        """
+        if not current_app.debug:
+            existing_token = ApiToken.query.filter_by(user=user).first()
+        else:
+            existing_token = None
+            for token in self._tokens.values():
+                if token.user == user:
+                    existing_token = token
+                    break
+
+        if not existing_token:
+            raise ValueError(f"No API token for user {user} exists. Use create_token "
+                             f"to create a new ApiToken.")
+
+        existing_token.token = str(self.__generate_token())
+        existing_token.created_at = datetime.now()
+
+        if not current_app.debug:
+            db.session.commit()
+
+        return existing_token
 
     def delete_token(self, token: str):
         """
