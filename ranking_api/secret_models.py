@@ -1,7 +1,7 @@
 """
 Definitions for models stored in separate secret database.
 """
-from datetime import datetime
+from datetime import datetime, timezone
 
 from sqlalchemy.ext.hybrid import hybrid_property
 
@@ -29,4 +29,4 @@ class ApiToken(db.Model):
         True if the token is expired, False otherwise. Always False for
         nullified expires_in values.
         """
-        return self.expires_in is not None and datetime.now() > self.expires_in
+        return self.expires_in is not None and datetime.now(timezone.utc) > self.expires_in

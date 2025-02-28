@@ -5,7 +5,7 @@ Import this module where authentication is needed.
 
 import uuid
 from typing import Any, Dict, Union, Optional
-from datetime import datetime
+from datetime import datetime, timezone
 
 from flask import current_app
 
@@ -67,7 +67,7 @@ class Keyring:
         api_token = ApiToken(token=str(self.__generate_token()),
                              user=user,
                              expires_in=None,
-                             created_at=datetime.now())
+                             created_at=datetime.now(timezone.utc))
 
         if not current_app.debug:
             db.session.add(api_token)
@@ -99,7 +99,7 @@ class Keyring:
                              f"to create a new ApiToken.")
 
         existing_token.token = str(self.__generate_token())
-        existing_token.created_at = datetime.now()
+        existing_token.created_at = datetime.now(timezone.utc)
 
         if not current_app.debug:
             db.session.commit()
