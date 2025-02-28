@@ -6,5 +6,8 @@ from ranking_api.app import create_app
 
 
 if __name__ == "__main__":
-    app = create_app()
-    app.run(debug=True)
+    from config import Config
+    app_config = Config()
+    app_config.DEBUG = True
+    app = create_app(app_config)
+    app.run()
