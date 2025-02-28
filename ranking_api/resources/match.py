@@ -19,6 +19,7 @@ from jsonschema import (
 )
 
 from ranking_api.extensions import api, db
+from ranking_api.authentication import auth
 from ranking_api.models import Match
 
 
@@ -34,6 +35,7 @@ class MatchItem(Resource):
         return match.serialize()
 
     @staticmethod
+    @auth.login_required
     def delete(match: Match):
         """
         Match DELETE method handling 
@@ -43,6 +45,7 @@ class MatchItem(Resource):
         return Response(status=204)
 
     @staticmethod
+    @auth.login_required
     def post(match: Match):
         """
         Match POST method handling 
@@ -64,6 +67,7 @@ class MatchCollection(Resource):
         return [match.serialize() for match in matches]
 
     @staticmethod
+    @auth.login_required
     def post():
         """
         Handle POST method for matches
