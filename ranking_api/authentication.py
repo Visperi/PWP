@@ -9,7 +9,7 @@ from datetime import datetime
 from flask import current_app
 
 from ranking_api.extensions import auth, db
-from ranking_api.models import ApiToken
+from ranking_api.secret_models import ApiToken
 
 
 class Keyring:

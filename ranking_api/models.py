@@ -5,18 +5,6 @@ from .extensions import db
 from .resources.utils import ts_to_datetime
 
 
-class ApiToken(db.Model):
-    """
-    A model for API tokens.
-    """
-    __tablename__ = "api_tokens"
-
-    token = db.Column(db.String(36), primary_key=True)
-    user = db.Column(db.String(32), nullable=False)
-    expires_in = db.Column(db.DateTime, nullable=True)
-    created_at = db.Column(db.DateTime, nullable=False)
-
-
 class Player(db.Model):
     """
     Player database model class
