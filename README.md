@@ -45,7 +45,8 @@ Call `wsgi:create_app()` with chosen WSGI server application.
 All routes for other than GET method require a Bearer token. An API token for requests must be provided in 
 `Authorization` header, e.g. `Authorization: Bearer this-is-my-token`.
 
-In development, one API token is generated and printed on the application startup.
+In development, one API token is generated and printed on the application startup. For production, use module 
+`generate_keys.py` to generate the first key.
 
 ## Database
 
