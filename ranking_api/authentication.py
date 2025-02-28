@@ -30,11 +30,8 @@ class Keyring:
         """
         Read existing API tokens from database into the keyring.
         """
-        tokens = {}
         for api_token in ApiToken.query.all():
-            tokens[api_token.token] = api_token
-
-        self._tokens = tokens
+            self._tokens[api_token.token] = api_token
 
     def get(self, token: str, default: Any = None) -> Union[ApiToken, Any]:
         """
