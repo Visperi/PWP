@@ -27,8 +27,9 @@ def create_app(config_obj: Union[object, str] = "config.Config") -> Flask:
     """
     Create and initialize a new Ranking API application via factory methods.
 
-    :param config_obj: A configuration object import name of a configuration object. This object is not instantiated,
-                       so if that is needed it must be done before passing the object.
+    :param config_obj: A configuration object import name of a configuration object.
+                       This object is not instantiated, so if that is needed it must be
+                       done before passing the object.
     :return: The Flask application with extensions and interfaces registered for use.
     """
 

@@ -1,9 +1,10 @@
 """
-A module responsible for token authentication handling. Import this module where authentication is needed.
+A module responsible for token authentication handling.
+Import this module where authentication is needed.
 """
 
 import uuid
-from typing import Any, Dict, Union
+from typing import Any, Dict, Union, Optional
 from datetime import datetime
 
 from flask import current_app
@@ -13,6 +14,9 @@ from ranking_api.secret_models import ApiToken
 
 
 class Keyring:
+    """
+    A keyring object that handles API tokens for the application.
+    """
 
     def __init__(self):
         """
@@ -23,7 +27,7 @@ class Keyring:
             self.__read_persistent_tokens()
         else:
             dev_token = self.create_token("development_admin")
-            self._tokens[dev_token.token] = dev_token
+            self._tokens[str(dev_token)] = dev_token
             print(f"Your development API token is: {dev_token.token}")
 
     def __read_persistent_tokens(self):
@@ -83,6 +87,12 @@ class Keyring:
 
 
 @auth.verify_token
-def verify_token(token: str):
+def verify_token(token: str) -> Optional[ApiToken]:
+    """
+    Verify a token against approved tokens stored in the keyring.
+
+    :param token: A token provided by user in a request.
+    :return: ApiToken object corresponding the object if the token is valid, None otherwise.
+    """
     keyring = current_app.config["KEYRING"]
     return keyring.get(token)
