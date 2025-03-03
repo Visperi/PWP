@@ -1,6 +1,9 @@
 """
 Model definitions for the api database
 """
+import datetime
+from sqlalchemy.orm import validates
+
 from .extensions import db
 from .resources.utils import ts_to_datetime
 
@@ -14,6 +17,24 @@ class Player(db.Model):
     num_of_matches = db.Column(db.Integer, default=0, nullable=False)
     rating = db.Column(db.Integer, default=1000, nullable=False)
     matches = db.relationship("MatchPlayerRelation", back_populates="player", lazy='select')
+
+    @validates("username")
+    def validate_username(self, key, value):
+        if not isinstance(value, str):
+            raise ValueError("Player username must be a string")
+        if not value or len(value) < 1:
+            raise ValueError("Player username must be at least 1 character long")
+        if len(value) > 32:
+            raise ValueError("Player username cannot be over 32 characters long")
+        return value
+
+    @validates("num_of_matches", "rating")
+    def validate_ints(self, key, value):
+        if not isinstance(value, int):
+            raise ValueError(f"{key} must be an integer")
+        if value < 0:
+            raise ValueError(f"{key} cannot be negative")
+        return value
 
     @staticmethod
     def json_schema() -> dict:
@@ -83,6 +104,22 @@ class Match(db.Model):
     team1_score = db.Column(db.Integer, default=0)
     team2_score = db.Column(db.Integer, default=0)
     players = db.relationship('MatchPlayerRelation', back_populates='match', lazy='select')
+
+    @validates("location")
+    def validate_location(self, key, value):
+        if not isinstance(value, str):
+            raise ValueError("Location must be a string")
+        if not value or len(value) < 1:
+            raise ValueError("Location must be 1 character or longer")
+        if len(value) > 50:
+            raise ValueError("Location cannot be longer than 50 characters")
+        return value
+
+    @validates("time")
+    def validate_time(self, key, value):
+        if not isinstance(value, datetime.datetime):
+            raise ValueError("Time must be in datetime format")
+        return value
 
     @staticmethod
     def json_schema() -> dict:
