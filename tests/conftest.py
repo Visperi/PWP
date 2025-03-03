@@ -7,13 +7,19 @@ import pytest
 from ranking_api.app import create_app
 from ranking_api.extensions import db
 
-@pytest.fixture(scope="session") # create app only once per testing session to avoid error
+@pytest.fixture(scope="session")
 def test_app():
+    """
+    Create test app a single time for a single testing session
+    """
     app = create_app(testing=True)
     return app
 
 @pytest.fixture(scope="function") # new session created for each test
-def db_session(test_app):
+def db_session(test_app): # pylint: disable=W0621
+    """
+    Create testing db session
+    """
     with test_app.app_context():
         db.create_all()
         yield db.session
@@ -22,6 +28,8 @@ def db_session(test_app):
         db.session.remove()
 
 @pytest.fixture(scope="function") # new client created for each test
-def test_client(test_app):
-    """Setup a Flask test client."""
+def test_client(test_app): # pylint: disable=W0621
+    """
+    Setup a Flask test client.
+    """
     return test_app.test_client()

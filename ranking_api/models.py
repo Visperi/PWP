@@ -20,16 +20,22 @@ class Player(db.Model):
 
     @validates("username")
     def validate_username(self, key, value):
+        """
+        Validate username
+        """
         if not isinstance(value, str):
-            raise ValueError("Player username must be a string")
+            raise ValueError(f"{key} must be a string")
         if not value or len(value) < 1:
-            raise ValueError("Player username must be at least 1 character long")
+            raise ValueError(f"{key} must be at least 1 character long")
         if len(value) > 32:
-            raise ValueError("Player username cannot be over 32 characters long")
+            raise ValueError(f"{key} cannot be over 32 characters long")
         return value
 
     @validates("num_of_matches", "rating")
     def validate_ints(self, key, value):
+        """
+        Validate num_of_matches and rating
+        """
         if not isinstance(value, int):
             raise ValueError(f"{key} must be an integer")
         if value < 0:
@@ -107,18 +113,68 @@ class Match(db.Model):
 
     @validates("location")
     def validate_location(self, key, value):
+        """
+        Validate location
+        """
         if not isinstance(value, str):
-            raise ValueError("Location must be a string")
+            raise ValueError(f"{key} must be a string")
         if not value or len(value) < 1:
-            raise ValueError("Location must be 1 character or longer")
+            raise ValueError(f"{key} must be 1 character or longer")
         if len(value) > 50:
-            raise ValueError("Location cannot be longer than 50 characters")
+            raise ValueError(f"{key} cannot be longer than 50 characters")
         return value
 
     @validates("time")
     def validate_time(self, key, value):
+        """
+        Validate time
+        """
         if not isinstance(value, datetime.datetime):
-            raise ValueError("Time must be in datetime format")
+            raise ValueError(f"{key} must be in datetime format")
+        return value
+
+    @validates("description")
+    def validate_description(self, key, value):
+        """
+        Validate description
+        """
+        if value: # nullable
+            if not isinstance(value, str):
+                raise ValueError(f"{key} must be in string format")
+            if len(value) > 100:
+                raise ValueError(f"{key} cannot be longer than 100 characters")
+        return value
+
+    @validates("status")
+    def validate_status(self, key, value):
+        """
+        Validate status
+        """
+        if not isinstance(value, int):
+            raise ValueError(f"{key} must be an integer")
+        if value not in (0, 1, 2):
+            raise ValueError(f"{key} must be 0, 1 or 2")
+        return value
+
+    @validates("rating_shift")
+    def validate_rating_shift(self, key, value):
+        """
+        Validate rating shift
+        """
+        if value:
+            if not isinstance(value, int):
+                raise ValueError(f"{key} shift must be an integer")
+        return value
+
+    @validates("team1_score", "team2_score")
+    def validate_team_scores(self, key, value):
+        """
+        Validate team scores
+        """
+        if not isinstance(value, int):
+            raise ValueError(f"{key} must be an integer")
+        if value < 0:
+            raise ValueError(f"{key} cannot be")
         return value
 
     @staticmethod
@@ -158,7 +214,7 @@ class Match(db.Model):
                                 Negative for losing team.",
                 "anyOf": [
                     {"type": "null"},
-                    {"type": "integer", "minimum": 0}
+                    {"type": "integer"}
                 ]
             },
             "team1_score": {
