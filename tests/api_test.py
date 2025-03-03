@@ -1,20 +1,7 @@
-import pytest
 from datetime import datetime
-from app import create_app, db
-from models import Player, Match, MatchPlayerRelation
-from ... import populate_database
+from ranking_api.models import Player, Match, MatchPlayerRelation
+import populate_database
 
-@pytest.fixture
-def test_client():
-    """Setup a Flask test client and test database."""
-    app = create_app()
-    client = app.test_client()
-
-    with app.app_context():
-        db.create_all()
-        yield client
-        db.session.remove()
-        db.drop_all()
 
 class TestPlayerModel(object):
 
@@ -74,6 +61,7 @@ class TestMatchPlayerRelation(object):
         assert response.json["location"] == match_location
 
         # Join match
+        match_id = match.id
         join_resp = test_client.post(f"/matches/{match_id}/join", json={"player_username": player_name})
         assert join_resp.status_code == 200
         assert join_resp.json["message"] == "Player added to match"

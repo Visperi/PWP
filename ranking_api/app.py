@@ -21,7 +21,7 @@ from .resources.match import (
 )
 
 
-def create_app() -> Flask:
+def create_app(testing: bool = False) -> Flask:
     """
     Create and initialize a new Ranking API application via factory methods.
 
@@ -29,7 +29,10 @@ def create_app() -> Flask:
     """
 
     app = Flask(__name__.split(".", maxsplit=1)[0])
-    app.config.from_object("config.Config")
+    if testing:
+        app.config.from_object("config.TestConfig")
+    else:
+        app.config.from_object("config.Config")
 
     register_converters(app)
     register_resources()
