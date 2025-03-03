@@ -4,7 +4,7 @@ Module for populating the database
 
 import string
 import random
-from datetime import datetime
+from datetime import datetime, timezone
 
 from wsgi import create_app
 from ranking_api.extensions import db
@@ -51,7 +51,7 @@ def generate_match() -> Match:
     :return: A match model object.
     """
     location = _generate_string(50)
-    timestamp = datetime.utcnow()
+    timestamp = datetime.now(timezone.utc)
     description = random.choice([None, _generate_string(100)])
     status = random.randint(0, 2)
     rating_shift = random.randint(1, 50)

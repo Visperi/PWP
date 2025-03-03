@@ -139,7 +139,8 @@ class Match(db.Model):
             },
             "time": {
                 "description": "UTC timestamp for the game starting time",
-                "type": "date-time"
+                "type": "string",
+                "format": "date-time"
             },
             "description": {
                 "description": "Optional description, e.g. hashtag for the game",
