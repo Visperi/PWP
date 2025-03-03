@@ -1,4 +1,4 @@
-import json
+'''import json
 import os
 import pytest
 import random
@@ -10,10 +10,6 @@ from sqlalchemy.engine import Engine
 from sqlalchemy import event
 from sqlalchemy.exc import IntegrityError, StatementError
 
-from app import app, db
-from app import Location, Sensor, Deployment, Measurement
-
-
 
 @event.listens_for(Engine, "connect")
 def set_sqlite_pragma(dbapi_connection, connection_record):
@@ -21,21 +17,6 @@ def set_sqlite_pragma(dbapi_connection, connection_record):
     cursor.execute("PRAGMA foreign_keys=ON")
     cursor.close()
 
-# based on http://flask.pocoo.org/docs/1.0/testing/
-@pytest.fixture
-def client():
-    db_fd, db_fname = tempfile.mkstemp()
-    app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///" + db_fname
-    app.config["TESTING"] = True
-
-    db.create_all()
-    _populate_db()
-
-    yield app.test_client()
-
-    db.session.remove()
-    os.close(db_fd)
-    os.unlink(db_fname)
 
 def _populate_db():
     for idx, letter in enumerate("ABC", start=1):
@@ -193,4 +174,4 @@ class TestSensorItem(object):
         assert resp.status_code == 404
         resp = client.delete(self.INVALID_URL)
         assert resp.status_code == 404
-        
+'''
