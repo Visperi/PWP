@@ -3,8 +3,6 @@ from sqlalchemy.engine import Engine
 from sqlalchemy import event
 
 from ranking_api.models import Player, Match
-from ranking_api.extensions import db
-from ranking_api.app import create_app
 
 
 @event.listens_for(Engine, "connect")
