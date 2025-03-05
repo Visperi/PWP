@@ -17,6 +17,7 @@ from jsonschema import validate, ValidationError
 from sqlalchemy.exc import IntegrityError
 
 from ranking_api.extensions import api, db
+from ranking_api.authentication import auth
 from ranking_api.models import Player
 from .utils import str_to_bool
 
@@ -33,6 +34,7 @@ class PlayerItem(Resource):
         return player.serialize()
 
     @staticmethod
+    @auth.login_required
     def delete(player: Player):
         """
         Player DELETE method handling 
@@ -42,6 +44,7 @@ class PlayerItem(Resource):
         return Response(status=204)
 
     @staticmethod
+    @auth.login_required
     def post(player: Player):
         """
         Player POST method handling 
@@ -66,6 +69,7 @@ class PlayerCollection(Resource):
         return [player.serialize(include_matches=include_matches) for player in players]
 
     @staticmethod
+    @auth.login_required
     def post():
         """
         Handle POST method for players
