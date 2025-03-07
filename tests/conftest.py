@@ -10,12 +10,13 @@ from ranking_api.extensions import db
 @pytest.fixture(scope="session")
 def test_app():
     """
-    Create test app a single time for a single testing session
+    Create test app a single time for a single testing session and cleanup db after
     """
     app = create_app(testing=True)
     return app
 
-@pytest.fixture(scope="function") # new session created for each test
+
+@pytest.fixture(scope="function") # clean db state after each test
 def db_session(test_app): # pylint: disable=W0621
     """
     Create testing db session
@@ -25,10 +26,9 @@ def db_session(test_app): # pylint: disable=W0621
         yield db.session
         db.session.rollback()
         db.drop_all()
-        db.session.remove()
 
 @pytest.fixture(scope="function") # new client created for each test
-def test_client(test_app): # pylint: disable=W0621
+def test_client(test_app, db_session): # pylint: disable=W0621
     """
     Setup a Flask test client.
     """
