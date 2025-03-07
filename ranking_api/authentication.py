@@ -119,21 +119,20 @@ class Keyring:
         self._tokens[str(existing_token)] = existing_token
         return existing_token
 
-    def delete_token(self, token: str):
+    def delete_token(self, user: str):
         """
         Delete a token from the keyring and database.
 
-        :param token: The token to remove.
-        :raises KeyError: If the token is not in the keyring.
+        :param user: User to delete the token from.
+        :raises ValueError: If a token for the user does not exist.
         """
-        self._tokens.pop(token)
+        user_token = self.__get_token_by_user(user)
+        if not user_token:
+            raise ValueError(f"Token for user {user} does not exist.")
 
+        self._tokens.pop(str(user_token))
         if not current_app.debug:
-            existing_token = ApiToken.query.filter_by(token=token).first()
-            if not existing_token:
-                return
-
-            db.session.delete(existing_token)
+            db.session.delete(user_token)
             db.session.commit()
 
 
