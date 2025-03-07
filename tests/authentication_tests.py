@@ -40,9 +40,9 @@ class TestKeyring:
         """
         assert keyring is not None
 
-    def test_add_token(self, keyring):
+    def test_create_token(self, keyring):
         """
-        Test the Keyring.add functionality.
+        Test the Keyring.create_token functionality.
         """
         user = "testing"
         token = keyring.create_token(user)
@@ -54,7 +54,7 @@ class TestKeyring:
         assert token.user == user
         assert token.is_expired is False
 
-    def test_falsy_username_fails_token_creation(self, keyring):
+    def test_invalid_username_fails_token_creation(self, keyring):
         """
         Test that creating a token with non-string, empty string, or white space only string fails.
         """
@@ -76,7 +76,7 @@ class TestKeyring:
 
     def test_update_token(self, keyring):
         """
-        Test the Keyring.update functionality.
+        Test the Keyring.update_token functionality.
         """
         user = "testing"
         # Copy old token to prevent old and new tokens pointing to the same updated ApiToken object
@@ -111,7 +111,7 @@ class TestKeyring:
 
     def test_delete_token(self, keyring):
         """
-        Test the Keyring.delete functionality.
+        Test the Keyring.delete_token functionality.
         """
         user = "testing"
         token = keyring.create_token(user)
@@ -132,7 +132,7 @@ class TestKeyring:
         keyring = Keyring()  # Reset keyring
         assert keyring.get(str(token)) is not None
 
-        keyring.delete_token(str(user))
+        keyring.delete_token(user)
         keyring = Keyring()
         assert keyring.get(str(token)) is None
 
