@@ -200,8 +200,12 @@ class Match(db.Model):
             },
             "description": {
                 "description": "Optional description, e.g. hashtag for the game",
-                "type": "string",
-                "maxLength": 100
+                "anyOf": [
+                    {"type": "string",
+                     "maxLength": 100
+                    },
+                    {"type": "null"}
+                ],
             },
             "status": {
                 "description": "On-going status of the game",
@@ -210,8 +214,8 @@ class Match(db.Model):
                 "maximum": 2
             },
             "rating_shift": {
-                "description": "Rating shift for the teams after finishing the game. \
-                                Negative for losing team.",
+                "description": "Rating shift for the teams after finishing the game. "
+                                "Negative for losing team.",
                 "anyOf": [
                     {"type": "null"},
                     {"type": "integer"}

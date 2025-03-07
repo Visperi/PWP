@@ -51,7 +51,7 @@ def generate_match() -> Match:
     :return: A match model object.
     """
     location = _generate_string(50)
-    timestamp = datetime.now(timezone.utc)
+    time = datetime.now(timezone.utc)
     description = random.choice([None, _generate_string(100)])
     status = random.randint(0, 2)
     rating_shift = random.randint(1, 50)
@@ -59,7 +59,7 @@ def generate_match() -> Match:
     team2_score = random.randint(0, 16)
 
     return Match(location=location,
-                 time=timestamp,
+                 time=time,
                  description=description,
                  status=status,
                  rating_shift=rating_shift,
