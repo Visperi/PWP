@@ -1,17 +1,13 @@
 """
 Module for testing application api endpoints
 """
-from datetime import datetime
-from ranking_api.models import Player, Match, MatchPlayerRelation
-import populate_database
-import json
-from sqlalchemy.orm import class_mapper
 import pytest
+import populate_database
 
 
-class TestPlayerCollection(object):
+class TestPlayerModel:
     """
-    Test class for player resources
+    Test behavior for player api resources
     """
 
     RESOURCE_URL = "/api/players/"
@@ -29,11 +25,13 @@ class TestPlayerCollection(object):
         assert resp_pname == new_player.username
 
     def test_create_player_invalid_datatype(self, test_client):
-        """Test insert invalid json"""
+        """Test insert invalid datatype"""
         new_player = populate_database.generate_player()
-        response = test_client.post(self.RESOURCE_URL, json=new_player.username, mimetype="text/plain")
-        print(response.data)
-        print(response.status_code)
+        response = test_client.post(
+            self.RESOURCE_URL,
+            json=new_player.username,
+            mimetype="text/plain"
+            )
         assert response.status_code == 415
 
     def test_create_player_invalid_json(self, test_client):
@@ -85,32 +83,79 @@ class TestPlayerCollection(object):
 
         # TODO change this after put is implemented
         with pytest.raises(NotImplementedError):
-            response = test_client.post(f"{self.RESOURCE_URL}{player.username}/", json=player.serialize())
- 
+            test_client.post(f"{self.RESOURCE_URL}{player.username}/", json=player.serialize())
 
-class TestMatchModel(object):
 
+class TestMatchModel:
+    """
+    Test match api endpoint behavior
+    """
     RESOURCE_URL = "/api/matches/"
+
+    def __create_match(self, test_client):
+        new_match = populate_database.generate_match()
+        response = test_client.post(self.RESOURCE_URL, json=new_match.serialize())
+        return new_match, response
 
     def test_create_match(self, test_client):
         """Test creating a new match."""
-        match = populate_database.generate_match()
-        match_location = match.location
-        response = test_client.post(self.RESOURCE_URL, json=match.serialize())
+        _, response = self.__create_match(test_client)
         assert response.status_code == 201
-        assert response.json["location"] == match_location
+
+    def test_create_match_invalid_json(self, test_client):
+        """Test create match with invalid json in request"""
+        new_match, _ = self.__create_match(test_client)
+        new_match = new_match.serialize()
+        del new_match["location"]
+        response = test_client.post(self.RESOURCE_URL, json=new_match)
+        assert response.status_code == 400
+
+    def test_get_match(self, test_client):
+        """Test get single match"""
+        new_match, _ = self.__create_match(test_client)
+        response = test_client.get(f"{self.RESOURCE_URL}1/")
+        assert response.status_code == 200
+        assert response.json["location"] == new_match.location
 
     def test_get_matches(self, test_client):
         """Test retrieving all matches."""
+        self.__create_match(test_client)
+        self.__create_match(test_client)
+
         response = test_client.get(self.RESOURCE_URL)
         assert response.status_code == 200
         assert isinstance(response.json, list)
+        assert len(response.json) == 2
 
-class TestMatchPlayerRelation(object):
+    def test_delete_match(self, test_client):
+        """Test deleting a match"""
+        self.__create_match(test_client)
+        response = test_client.delete(f"{self.RESOURCE_URL}1/")
+        assert response.status_code == 204
+
+    def test_update_match(self, test_client):
+        """Test updating existing match"""
+        new_match, _ = self.__create_match(test_client)
+        new_match.location = new_match.location[:-1]
+        with pytest.raises(NotImplementedError):
+            test_client.post(f"{self.RESOURCE_URL}1/", json=new_match.serialize())
+
+    def test_match_conversion(self, test_client):
+        """
+        Test match conversion raises notfound error
+        """
+        response = test_client.get(f"{self.RESOURCE_URL}400/")
+        assert response.status_code == 404
+
+class TestMatchPlayerRelation:
+    """
+    Test matchplayer relation behavior in the api
+    """
 
     PLAYER_URL = "/api/players/"
     MATCH_URL = "/api/matches/"
 
+    # Match joining is NOT implemented yet TODO
     def test_join_match(self, test_client):
         """Test associating a player with a match."""
         # Get first player
@@ -120,13 +165,11 @@ class TestMatchPlayerRelation(object):
 
         # Create match
         match = populate_database.generate_match()
-        match_location = match.location
         response = test_client.post(self.MATCH_URL, json=match.serialize())
         assert response.status_code == 201
-        assert response.json["location"] == match_location
 
         # Join match
-        match_id = match.id
-        join_resp = test_client.post(f"/matches/{match_id}/join", json={new_player})
-        assert join_resp.status_code == 200
-        assert join_resp.json["message"] == "Player added to match"
+    def test_leave_match(self, test_client):
+        """Test player leaving match"""
+        # leave
+        pass

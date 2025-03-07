@@ -28,7 +28,7 @@ def db_session(test_app): # pylint: disable=W0621
         db.drop_all()
 
 @pytest.fixture(scope="function") # new client created for each test
-def test_client(test_app, db_session): # pylint: disable=W0621
+def test_client(test_app, db_session): # pylint: disable=W0621,W0613
     """
     Setup a Flask test client.
     """
