@@ -40,6 +40,12 @@ class TestKeyring:
         """
         assert keyring is not None
 
+    def test_get_debug_token(self, keyring):
+        """
+        Test the debug token is None in production.
+        """
+        assert keyring.debug_token is None
+
     def test_create_token(self, keyring):
         """
         Test the Keyring.create_token functionality.

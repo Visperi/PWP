@@ -29,14 +29,8 @@ class Keyring:
     def __generate_token():
         return uuid.uuid4()
 
-    def __read_persistent_tokens(self):
-        """
-        Read existing API tokens from database into the keyring.
-        """
-        for api_token in ApiToken.query.all():
-            self._tokens[api_token.token] = api_token
-
-    def __get_token_by_user(self, user: str) -> Optional[ApiToken]:
+    @staticmethod
+    def __get_token_by_user(user: str) -> Optional[ApiToken]:
         """
         Get API token by user.
 
@@ -44,6 +38,26 @@ class Keyring:
         :return: ApiToken if token is found, None otherwise.
         """
         return ApiToken.query.filter_by(user=user).first()
+
+    def __read_persistent_tokens(self):
+        """
+        Read existing API tokens from database into the keyring.
+        """
+        for api_token in ApiToken.query.all():
+            self._tokens[api_token.token] = api_token
+
+    @property
+    def debug_token(self) -> Optional[ApiToken]:
+        """
+        An API token for development in debug mode.
+
+        :return: If in debug mode, returns the API token for development. None otherwise.
+        """
+        if not current_app.debug:
+            return None
+
+        dev_user = "development admin"
+        return self.__get_token_by_user(dev_user) or self.create_token(dev_user)
 
     def get(self, token: str, default: Any = None) -> Union[ApiToken, Any]:
         """

@@ -43,10 +43,22 @@ def create_app(config_obj: Union[object, str] = "config.Config") -> Flask:
     # Initialize keyring and create database tables if they do not exist yet
     with app.app_context():
         db.create_all()
-        app.config["KEYRING"] = Keyring()
+        initialize_keyring(app)
+
 
     return app
 
+
+def initialize_keyring(app: Flask):
+    """
+    Initialize a keyring object handling API tokens.
+
+    :param app: The Flask app to initialize the keyring to.
+    """
+    keyring = Keyring()
+    app.config["KEYRING"] = keyring
+    if app.debug:
+        print(f"Your development API token is: {keyring.debug_token}")
 
 def register_converters(app: Flask):
     """
