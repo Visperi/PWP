@@ -70,9 +70,6 @@ class PlayerCollection(Resource):
         """
         Handle POST method for players
         """
-        if not request.json:
-            raise UnsupportedMediaType
-
         try:
             validate(request.json, Player.json_schema())
         except ValidationError as e:
