@@ -9,8 +9,7 @@ from flask_restful import Resource
 from werkzeug.routing import BaseConverter
 from werkzeug.exceptions import (
     NotFound,
-    BadRequest,
-    UnsupportedMediaType
+    BadRequest
 )
 from jsonschema import (
     validate,
@@ -72,9 +71,6 @@ class MatchCollection(Resource):
         """
         Handle POST method for matches
         """
-        if not request.json:
-            raise UnsupportedMediaType
-
         try:
             validate(request.json, Match.json_schema(), format_checker=D7Validator.FORMAT_CHECKER)
         except ValidationError as e:

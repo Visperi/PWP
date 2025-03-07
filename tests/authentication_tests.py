@@ -184,7 +184,7 @@ class TestApiAuthentication:
     PLAYERS_URL = "/api/players/"
     MATCHES_URL = "/api/matches/"
 
-    @pytest.fixture(scope="class")
+    @pytest.fixture(scope="function")
     def match_id(self, test_app):
         """
         Create a match and get its ID as string.
@@ -195,7 +195,7 @@ class TestApiAuthentication:
             db.session.commit()
             return str(match.id)
 
-    @pytest.fixture(scope="class")
+    @pytest.fixture(scope="function")
     def player_username(self, test_app):
         """
         Create a player and get its username.
@@ -206,7 +206,7 @@ class TestApiAuthentication:
             db.session.commit()
             return player.username
 
-    @pytest.fixture(scope="class")
+    @pytest.fixture(scope="function")
     def auth_header(self, test_app):
         """
         Get authorization header for requests requiring authentication.
@@ -257,6 +257,7 @@ class TestApiAuthentication:
                                 follow_redirects=True,
                                 headers=auth_header).status_code != 401
 
+        # TODO: Update when POST methods for individual players and matches are implemented
         with pytest.raises(NotImplementedError):
             assert test_client.post(self.PLAYERS_URL + player_username,
                                     follow_redirects=True,

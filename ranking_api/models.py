@@ -1,6 +1,9 @@
 """
 Model definitions for the api database
 """
+import datetime
+from sqlalchemy.orm import validates
+
 from .extensions import db
 from .resources.utils import ts_to_datetime
 
@@ -14,6 +17,30 @@ class Player(db.Model):
     num_of_matches = db.Column(db.Integer, default=0, nullable=False)
     rating = db.Column(db.Integer, default=1000, nullable=False)
     matches = db.relationship("MatchPlayerRelation", back_populates="player", lazy='select')
+
+    @validates("username")
+    def validate_username(self, key, value):
+        """
+        Validate username
+        """
+        if not isinstance(value, str):
+            raise ValueError(f"{key} must be a string")
+        if not value or len(value) < 1:
+            raise ValueError(f"{key} must be at least 1 character long")
+        if len(value) > 32:
+            raise ValueError(f"{key} cannot be over 32 characters long")
+        return value
+
+    @validates("num_of_matches", "rating")
+    def validate_ints(self, key, value):
+        """
+        Validate num_of_matches and rating
+        """
+        if not isinstance(value, int):
+            raise ValueError(f"{key} must be an integer")
+        if value < 0:
+            raise ValueError(f"{key} cannot be negative")
+        return value
 
     @staticmethod
     def json_schema() -> dict:
@@ -84,6 +111,72 @@ class Match(db.Model):
     team2_score = db.Column(db.Integer, default=0)
     players = db.relationship('MatchPlayerRelation', back_populates='match', lazy='select')
 
+    @validates("location")
+    def validate_location(self, key, value):
+        """
+        Validate location
+        """
+        if not isinstance(value, str):
+            raise ValueError(f"{key} must be a string")
+        if not value or len(value) < 1:
+            raise ValueError(f"{key} must be 1 character or longer")
+        if len(value) > 50:
+            raise ValueError(f"{key} cannot be longer than 50 characters")
+        return value
+
+    @validates("time")
+    def validate_time(self, key, value):
+        """
+        Validate time
+        """
+        if not isinstance(value, datetime.datetime):
+            raise ValueError(f"{key} must be in datetime format")
+        return value
+
+    @validates("description")
+    def validate_description(self, key, value):
+        """
+        Validate description
+        """
+        if value: # nullable
+            if not isinstance(value, str):
+                raise ValueError(f"{key} must be in string format")
+            if len(value) > 100:
+                raise ValueError(f"{key} cannot be longer than 100 characters")
+        return value
+
+    @validates("status")
+    def validate_status(self, key, value):
+        """
+        Validate status
+        """
+        if not isinstance(value, int):
+            raise ValueError(f"{key} must be an integer")
+        if value not in (0, 1, 2):
+            raise ValueError(f"{key} must be 0, 1 or 2")
+        return value
+
+    @validates("rating_shift")
+    def validate_rating_shift(self, key, value):
+        """
+        Validate rating shift
+        """
+        if value:
+            if not isinstance(value, int):
+                raise ValueError(f"{key} shift must be an integer")
+        return value
+
+    @validates("team1_score", "team2_score")
+    def validate_team_scores(self, key, value):
+        """
+        Validate team scores
+        """
+        if not isinstance(value, int):
+            raise ValueError(f"{key} must be an integer")
+        if value < 0:
+            raise ValueError(f"{key} cannot be")
+        return value
+
     @staticmethod
     def json_schema() -> dict:
         """
@@ -107,8 +200,12 @@ class Match(db.Model):
             },
             "description": {
                 "description": "Optional description, e.g. hashtag for the game",
-                "type": "string",
-                "maxLength": 100
+                "anyOf": [
+                    {"type": "string",
+                     "maxLength": 100
+                    },
+                    {"type": "null"}
+                ],
             },
             "status": {
                 "description": "On-going status of the game",
@@ -117,11 +214,11 @@ class Match(db.Model):
                 "maximum": 2
             },
             "rating_shift": {
-                "description": "Rating shift for the teams after finishing the game. \
-                                Negative for losing team.",
+                "description": "Rating shift for the teams after finishing the game. "
+                                "Negative for losing team.",
                 "anyOf": [
                     {"type": "null"},
-                    {"type": "integer", "minimum": 0}
+                    {"type": "integer"}
                 ]
             },
             "team1_score": {
@@ -159,7 +256,7 @@ class Match(db.Model):
         """
         ret = {"id": self.id,
                "location": self.location,
-               "timestamp": str(self.time),
+               "time": str(self.time),
                "description": self.description,
                "status": self.status,
                "rating_shift": self.rating_shift,
