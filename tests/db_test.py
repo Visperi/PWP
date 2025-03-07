@@ -387,47 +387,65 @@ def test_get_match_json_schema():
     """
     schema = Match.json_schema()
     expected = {
-        'type': 'object',
-        'required': ['location', 'time'],
-        'properties': {
-            'location': {
-                'description': 'Physical location of the game',
-                'type': 'string',
-                'minLength': 1,
-                'maxLength': 50
+        "type": "object",
+        "required": [
+        "location",
+        "time"
+        ],
+        "properties": {
+            "location": {
+                "description": "Physical location of the game",
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 50
+            },
+            "time": {
+                "description": "UTC timestamp for the game starting time",
+                "type": "string",
+                "format": "date-time"
+            },
+            "description": {
+                "description": "Optional description, e.g. hashtag for the game",
+                "anyOf": [
+                {
+                    "type": "string",
+                    "maxLength": 100
                 },
-            'time': {
-                'description': 'UTC timestamp for the game starting time',
-                'type': 'string',
-                'format': 'date-time'
-                },
-            'description': {
-                'description': 'Optional description, e.g. hashtag for the game',
-                'type': 'string',
-                'maxLength': 100
-                },
-            'status': {
-                'description': 'On-going status of the game',
-                'type': 'integer',
-                'minimum': 0,
-                'maximum': 2
-                },
-            'rating_shift': {
-                'description': 'Rating shift for the teams after finishing the game. \
-                                Negative for losing team.',
-                'anyOf': [{'type': 'null'}, {'type': 'integer'}]},
-                'team1_score': {'description': 'Team 1 score in the game',
-                'type': 'integer',
-                'minimum': 0
-                },
-            'team2_score': {
-                'description': 'Team 2 score in the game',
-                'type': 'integer',
-                'minimum': 0
+                {
+                    "type": "null"
                 }
+                ]
+            },
+            "status": {
+                "description": "On-going status of the game",
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 2
+            },
+            "rating_shift": {
+                "description": "Rating shift for the teams"
+                 +" after finishing the game. Negative for losing team.",
+                "anyOf": [
+                {
+                    "type": "null"
+                },
+                {
+                    "type": "integer"
+                }
+                ]
+            },
+            "team1_score": {
+                "description": "Team 1 score in the game",
+                "type": "integer",
+                "minimum": 0
+            },
+            "team2_score": {
+                "description": "Team 2 score in the game",
+                "type": "integer",
+                "minimum": 0
             }
         }
-
+    }
     assert schema == expected
 
 @pytest.mark.parametrize(
@@ -598,7 +616,7 @@ def test_player_serialize_include_matches(db_session):
     expected = [
         {'id': 1,
          'location': 'place',
-         'timestamp': '2001-09-11 15:46:00',
+         'time': '2001-09-11 15:46:00',
          'description': None,
          'status': 0,
          'rating_shift': None,
