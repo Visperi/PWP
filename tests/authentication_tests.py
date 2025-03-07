@@ -54,6 +54,16 @@ class TestKeyring:
         assert token.user == user
         assert token.is_expired is False
 
+    def test_falsy_username_fails_token_creation(self, keyring):
+        """
+        Test that creating a token with non-string, empty string, or white space only string fails.
+        """
+        with pytest.raises(ValueError):
+            keyring.create_token("")
+            keyring.create_token(" ")
+            keyring.create_token(1)
+            keyring.create_token(None)
+
     def test_creating_second_token_raises(self, keyring):
         """
         Test that attempting to add a second token for user raises an exception.
