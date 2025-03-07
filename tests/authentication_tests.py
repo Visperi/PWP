@@ -54,15 +54,13 @@ class TestKeyring:
         assert token.user == user
         assert token.is_expired is False
 
-    def test_invalid_username_fails_token_creation(self, keyring):
+    @pytest.mark.parametrize("username", ("", " ", 1, None))
+    def test_invalid_username_fails_token_creation(self, keyring, username):
         """
         Test that creating a token with non-string, empty string, or white space only string fails.
         """
         with pytest.raises(ValueError):
-            keyring.create_token("")
-            keyring.create_token(" ")
-            keyring.create_token(1)
-            keyring.create_token(None)
+            keyring.create_token(username)
 
     def test_creating_second_token_raises(self, keyring):
         """
@@ -215,64 +213,82 @@ class TestApiAuthentication:
             api_token = test_app.config["KEYRING"].create_token("test_user")
             return {"Authorization": f"Bearer {api_token}"}
 
-    def test_gets_pass_without_auth(self, test_client, player_username, match_id):
+    @pytest.mark.parametrize("url,fixture", (
+            (PLAYERS_URL, None),
+            (MATCHES_URL, None),
+            (PLAYERS_URL, "player_username"),
+            (MATCHES_URL, "match_id")
+    ))
+    def test_gets_pass_without_auth(self, test_client, url, request, fixture):
         """
         Test that GET requests to all resources are successful without providing API token.
         """
-        assert test_client.get(self.PLAYERS_URL).status_code == 200
-        assert test_client.get(self.MATCHES_URL).status_code == 200
-        assert test_client.get(self.PLAYERS_URL + player_username,
-                               follow_redirects=True).status_code == 200
-        assert test_client.get(self.MATCHES_URL + match_id,
-                               follow_redirects=True).status_code == 200
+        request_url = url
+        if fixture:
+            request_url += request.getfixturevalue(fixture)
 
-    def test_posts_fail_without_auth(self, test_client, player_username, match_id):
+        assert test_client.get(request_url, follow_redirects=True).status_code == 200
+
+    @pytest.mark.parametrize("url,fixture", (
+            (PLAYERS_URL, None),
+            (MATCHES_URL, None),
+            (PLAYERS_URL, "player_username"),
+            (MATCHES_URL, "match_id")
+    ))
+    def test_posts_fail_without_auth(self, test_client, request, url, fixture):
         """
         Test that all POST requests fail without providing API token.
         """
-        assert test_client.post(self.PLAYERS_URL).status_code == 401
-        assert test_client.post(self.MATCHES_URL).status_code == 401
-        assert test_client.post(self.PLAYERS_URL + player_username,
-                                follow_redirects=True).status_code == 401
-        assert test_client.post(self.MATCHES_URL + match_id,
-                                follow_redirects=True).status_code == 401
+        request_url = url
+        if fixture:
+            request_url += request.getfixturevalue(fixture)
 
-    def test_deletes_fail_without_auth(self, test_client, player_username, match_id):
+        assert test_client.post(request_url, follow_redirects=True).status_code == 401
+
+    @pytest.mark.parametrize("url,fixture", (
+            (PLAYERS_URL, "player_username"),
+            (MATCHES_URL, "match_id")
+    ))
+    def test_deletes_fail_without_auth(self, test_client, request, url, fixture):
         """
         Test that all DELETE requests fail without providing API token.
         """
-        assert test_client.post(self.PLAYERS_URL + player_username,
-                                follow_redirects=True).status_code == 401
-        assert test_client.post(self.MATCHES_URL + match_id,
-                                follow_redirects=True).status_code == 401
+        request_url = url
+        if fixture:
+            request_url += request.getfixturevalue(fixture)
 
-    def test_posts_success_with_auth(self, test_client, auth_header, player_username, match_id):
+        assert test_client.post(request_url, follow_redirects=True).status_code == 401
+
+    @pytest.mark.parametrize("url,fixture", (
+            (PLAYERS_URL, None, None),
+            (MATCHES_URL, None, None),
+            (PLAYERS_URL, "player_username"),
+            (MATCHES_URL, "match_id")
+    ))
+    def test_posts_success_with_auth(self, test_client, auth_header, request, url, fixture):  # pylint: disable=R0913,R0917
         """
         Test that all POST requests are processed when API token is provided.
         """
-        assert test_client.post(self.PLAYERS_URL,
-                                follow_redirects=True,
-                                headers=auth_header).status_code != 401
-        assert test_client.post(self.MATCHES_URL,
-                                follow_redirects=True,
-                                headers=auth_header).status_code != 401
+        request_url = url
+        if fixture:
+            request_url += request.getfixturevalue(fixture)
 
-        # TODO: Update when POST methods for individual players and matches are implemented
-        with pytest.raises(NotImplementedError):
-            assert test_client.post(self.PLAYERS_URL + player_username,
-                                    follow_redirects=True,
-                                    headers=auth_header).status_code != 401
-            assert test_client.post(self.MATCHES_URL + match_id,
-                                    follow_redirects=True,
-                                    headers=auth_header).status_code != 401
+        assert test_client.post(request_url,
+                                headers=auth_header,
+                                follow_redirects=True).status_code != 401
 
-    def test_deletes_success_with_auth(self, test_client, auth_header, player_username, match_id):
+    @pytest.mark.parametrize("url,fixture", (
+            (PLAYERS_URL, "player_username"),
+            (MATCHES_URL, "match_id")
+    ))
+    def test_deletes_success_with_auth(self, test_client, auth_header, request, url, fixture):  # pylint: disable=R0913,R0917
         """
         Test that all DELETE requests are processed when API token is provided.
         """
-        assert test_client.delete(self.PLAYERS_URL + player_username,
-                                  follow_redirects=True,
-                                  headers=auth_header).status_code == 204
-        assert test_client.delete(self.MATCHES_URL + match_id,
-                                  follow_redirects=True,
-                                  headers=auth_header).status_code == 204
+        request_url = url
+        if fixture:
+            request_url += request.getfixturevalue(fixture)
+
+        assert test_client.delete(request_url,
+                                  headers=auth_header,
+                                  follow_redirects=True).status_code == 204
