@@ -10,7 +10,6 @@ from werkzeug.routing import BaseConverter
 from werkzeug.exceptions import (
     NotFound,
     BadRequest,
-    UnsupportedMediaType,
     Conflict
 )
 from jsonschema import validate, ValidationError
