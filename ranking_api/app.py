@@ -58,7 +58,7 @@ def initialize_keyring(app: Flask):
     keyring = Keyring()
     app.config["KEYRING"] = keyring
     if app.debug:
-        print(f"Your development API token is: {keyring.debug_token}")
+        app.logger.info(f"Your development API token is: {keyring.debug_token}")
 
 def register_converters(app: Flask):
     """
