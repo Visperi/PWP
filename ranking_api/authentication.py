@@ -77,7 +77,7 @@ class Keyring:
         :raises ValueError: If a token for the user already exists or user is not non-empty string.
                             White space only is considered as an empty string.
         """
-        if not user.strip() or not isinstance(user, str):
+        if not isinstance(user, str) or not user.strip():
             raise ValueError("User must be an instance of non-empty string")
         if self.__get_token_by_user(user):
             raise ValueError(f"API token for user {user} already exists. Use update_token to "
