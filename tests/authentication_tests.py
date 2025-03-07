@@ -210,15 +210,6 @@ class TestApiAuthentication:
             db.session.commit()
             return player.username
 
-    @pytest.fixture(scope="function")
-    def auth_header(self, test_app):
-        """
-        Get authorization header for requests requiring authentication.
-        """
-        with test_app.app_context():
-            api_token = test_app.config["KEYRING"].create_token("test_user")
-            return {"Authorization": f"Bearer {api_token}"}
-
     @pytest.mark.parametrize("url,fixture", (
             (PLAYERS_URL, None),
             (MATCHES_URL, None),

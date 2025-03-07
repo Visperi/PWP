@@ -33,3 +33,9 @@ def test_client(test_app, db_session): # pylint: disable=W0621,W0613
     Setup a Flask test client.
     """
     return test_app.test_client()
+
+@pytest.fixture(scope="function")
+def auth_header(test_app):
+    with test_app.app_context():
+        api_token = test_app.config["KEYRING"].create_token("tests")
+        return {"Authorization": f"Bearer {api_token}"}
