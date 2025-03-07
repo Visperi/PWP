@@ -23,12 +23,7 @@ class Keyring:
         A keyring object that handles API tokens for the application.
         """
         self._tokens: Dict[str, ApiToken] = {}
-        if not current_app.debug:
-            self.__read_persistent_tokens()
-        else:
-            dev_token = self.create_token("development_admin")
-            self._tokens[str(dev_token)] = dev_token
-            print(f"Your development API token is: {dev_token.token}")
+        self.__read_persistent_tokens()
 
     @staticmethod
     def __generate_token():
@@ -48,14 +43,7 @@ class Keyring:
         :param user: User to search from tokens.
         :return: ApiToken if token is found, None otherwise.
         """
-        if not current_app.debug:
-            return ApiToken.query.filter_by(user=user).first()
-
-        for token in self._tokens.values():
-            if token.user == user:
-                return token
-
-        return None
+        return ApiToken.query.filter_by(user=user).first()
 
     def get(self, token: str, default: Any = None) -> Union[ApiToken, Any]:
         """
@@ -88,9 +76,8 @@ class Keyring:
                              expires_in=None,
                              created_at=datetime.now(timezone.utc))
 
-        if not current_app.debug:
-            db.session.add(api_token)
-            db.session.commit()
+        db.session.add(api_token)
+        db.session.commit()
 
         self._tokens[api_token.token] = api_token
         return api_token
@@ -113,9 +100,7 @@ class Keyring:
         existing_token.token = str(self.__generate_token())
         existing_token.created_at = datetime.now(timezone.utc)
 
-        if not current_app.debug:
-            db.session.commit()
-
+        db.session.commit()
         self._tokens[str(existing_token)] = existing_token
         return existing_token
 
@@ -130,10 +115,9 @@ class Keyring:
         if not user_token:
             raise ValueError(f"Token for user {user} does not exist.")
 
+        db.session.delete(user_token)
+        db.session.commit()
         self._tokens.pop(str(user_token))
-        if not current_app.debug:
-            db.session.delete(user_token)
-            db.session.commit()
 
 
 @auth.verify_token
