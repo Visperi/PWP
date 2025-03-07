@@ -252,7 +252,7 @@ class Match(db.Model):
         """
         ret = {"id": self.id,
                "location": self.location,
-               "timestamp": str(self.time),
+               "time": str(self.time),
                "description": self.description,
                "status": self.status,
                "rating_shift": self.rating_shift,
