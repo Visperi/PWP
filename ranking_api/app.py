@@ -1,9 +1,11 @@
 """
 App factory module for creating the application.
 """
+from typing import Union
 
 from flask import Flask
 
+from .authentication import Keyring
 from .extensions import (
     db,
     api
@@ -21,29 +23,42 @@ from .resources.match import (
 )
 
 
-def create_app(testing: bool = False) -> Flask:
+def create_app(config_obj: Union[object, str] = "config.Config") -> Flask:
     """
     Create and initialize a new Ranking API application via factory methods.
 
+    :param config_obj: A configuration object import name of a configuration object.
+                       This object is not instantiated, so if that is needed it must be
+                       done before passing the object.
     :return: The Flask application with extensions and interfaces registered for use.
     """
 
     app = Flask(__name__.split(".", maxsplit=1)[0])
-    if testing:
-        app.config.from_object("config.TestConfig")
-    else:
-        app.config.from_object("config.Config")
+    app.config.from_object(config_obj)
 
     register_converters(app)
     register_resources()
     register_extensions(app)
 
-    # Create tables if they do not exist yet
+    # Initialize keyring and create database tables if they do not exist yet
     with app.app_context():
         db.create_all()
+        initialize_keyring(app)
+
 
     return app
 
+
+def initialize_keyring(app: Flask):
+    """
+    Initialize a keyring object handling API tokens.
+
+    :param app: The Flask app to initialize the keyring to.
+    """
+    keyring = Keyring()
+    app.config["KEYRING"] = keyring
+    if app.debug:
+        app.logger.info(f"Your development API token is: {keyring.debug_token}")
 
 def register_converters(app: Flask):
     """
