@@ -124,7 +124,7 @@ class TestKeyring:
         assert keyring.get(str(token)) is None
         # Attempt to delete now nonexistent token
         with pytest.raises(ValueError):
-            keyring.delete_token(str(token))
+            keyring.delete_token(token.user)
 
     def test_keyring_persistence(self, keyring):
         """
@@ -254,7 +254,7 @@ class TestApiAuthentication:
         if fixture:
             request_url += request.getfixturevalue(fixture)
 
-        assert test_client.post(request_url, follow_redirects=True).status_code == 401
+        assert test_client.delete(request_url, follow_redirects=True).status_code == 401
 
     @pytest.mark.parametrize("url,fixture", (
             (PLAYERS_URL, None),
