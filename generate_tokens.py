@@ -1,6 +1,6 @@
 """
-Generate a key for user without the API interface.
-Use this module to generate the first API key.
+Generate an API token for user without the API interface.
+Use this module to generate the first API token.
 """
 from ranking_api.app import create_app
 from ranking_api.authentication import Keyring

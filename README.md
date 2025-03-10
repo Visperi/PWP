@@ -51,7 +51,7 @@ All routes for other than GET method require a Bearer token. An API token for re
 `Authorization` header, e.g. `Authorization: Bearer this-is-my-token`.
 
 In development, one API token is generated and printed on the application startup. For production, use module 
-`generate_keys.py` to generate the first key.
+`generate_tokens.py` to generate the first API token.
 
 ## Database
 
