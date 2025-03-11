@@ -18,7 +18,10 @@ class Player(db.Model):
     USERNAME_MAX_LENGTH = 32
 
     __tablename__ = "players"
-    username = db.Column(db.String(USERNAME_MAX_LENGTH), primary_key=True, nullable=False, unique=True)
+    username = db.Column(db.String(USERNAME_MAX_LENGTH),
+                         primary_key=True,
+                         nullable=False,
+                         unique=True)
     num_of_matches = db.Column(db.Integer, default=NUM_OF_MATCHES_DEFAULT, nullable=False)
     rating = db.Column(db.Integer, default=RATING_DEFAULT, nullable=False)
     matches = db.relationship("MatchPlayerRelation", back_populates="player", lazy='select')
@@ -153,7 +156,8 @@ class Match(db.Model):
             if not isinstance(value, str):
                 raise ValueError(f"{key} must be in string format")
             if len(value) > self.DESCRIPTION_MAX_LENGTH:
-                raise ValueError(f"{key} cannot be longer than {self.DESCRIPTION_MAX_LENGTH} characters")
+                raise ValueError(f"{key} cannot be longer than "
+                                 f"{self.DESCRIPTION_MAX_LENGTH} characters")
         return value
 
     @validates("status")
