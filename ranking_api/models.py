@@ -240,13 +240,13 @@ class Match(db.Model):
         """
         Deserialization method for match data
         """
-        self.location = data.get('location')
-        self.time = ts_to_datetime(data.get('time'))  # Convert to datetime or raise BadRequest
-        self.description = data.get('description')
-        self.status = data.get('status')
+        self.location = data["location"]
+        self.time = ts_to_datetime(data["time"])  # Convert to datetime or raise BadRequest
+        self.description = data.get("description")
+        self.status = data.get('status', 0)
         self.rating_shift = data.get('rating_shift')
-        self.team1_score = data.get('team1_score')
-        self.team2_score = data.get('team2_score')
+        self.team1_score = data.get('team1_score', 0)
+        self.team2_score = data.get('team2_score', 0)
 
     def serialize(self, include_players: bool = True) -> dict:
         """
