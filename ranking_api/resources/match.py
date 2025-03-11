@@ -74,7 +74,8 @@ class MatchCollection(Resource):
         try:
             validate(request.json, Match.json_schema(), format_checker=D7Validator.FORMAT_CHECKER)
         except ValidationError as e:
-            raise BadRequest(description=str(e)) from e
+            msg = f"{e.schema['description']}: {e.message}"
+            raise BadRequest(description=msg) from e
 
         match = Match()
         match.deserialize(request.json)

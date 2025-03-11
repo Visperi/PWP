@@ -76,7 +76,8 @@ class PlayerCollection(Resource):
         try:
             validate(request.json, Player.json_schema())
         except ValidationError as e:
-            raise BadRequest(description=str(e)) from e
+            msg = f"{e.schema['description']}: {e.message}"
+            raise BadRequest(description=msg) from e
 
         player = Player()
         player.deserialize(request.json)
