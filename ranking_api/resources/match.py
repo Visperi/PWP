@@ -95,7 +95,7 @@ class MatchConverter(BaseConverter):
     def to_python(self, value: str) -> Match:
         match = Match.query.filter_by(id=value).first()
         if match is None:
-            raise NotFound
+            raise NotFound(description=f"No such match with ID {value}")
         return match
 
     def to_url(self, value: Match) -> str:

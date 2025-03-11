@@ -100,7 +100,7 @@ class PlayerConverter(BaseConverter):
     def to_python(self, value: str) -> Player:
         player = Player.query.filter_by(username=value).first()
         if player is None:
-            raise NotFound
+            raise NotFound(description=f"No such player with username {value}")
         return player
 
     def to_url(self, value: Player) -> str:
