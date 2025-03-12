@@ -5,6 +5,7 @@ Utility module for processing HTTP methods for resources.
 from datetime import datetime
 
 from werkzeug.exceptions import BadRequest
+from jsonschema import ValidationError
 
 
 def str_to_bool(value: str) -> bool:
@@ -39,3 +40,18 @@ def ts_to_datetime(timestamp: str) -> datetime:
         return datetime.fromisoformat(timestamp)
     except ValueError as exc:
         raise BadRequest("Bad datetime format") from exc
+
+
+def fetch_validation_error(error: ValidationError):
+    """
+    Fetch a short and useful validation error message from a ValidationError.
+    There is no need to send the full message with all field rules to the client.
+
+    :param error: The triggered ValidationError.
+    :return: An error message in format 'field_name: error_cause'
+    """
+    if error.validator == "required":
+        variable_name = error.validator_value[0]
+    else:
+        variable_name = error.relative_path[0]
+    return f"Error on value {variable_name}: {error.message}"

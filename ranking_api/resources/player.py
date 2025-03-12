@@ -18,7 +18,7 @@ from sqlalchemy.exc import IntegrityError
 from ranking_api.extensions import api, db
 from ranking_api.authentication import auth
 from ranking_api.models import Player
-from .utils import str_to_bool
+from .utils import str_to_bool, fetch_validation_error
 
 
 class PlayerItem(Resource):
@@ -76,8 +76,7 @@ class PlayerCollection(Resource):
         try:
             validate(request.json, Player.json_schema())
         except ValidationError as e:
-            msg = f"{e.schema['description']}: {e.message}"
-            raise BadRequest(description=msg) from e
+            raise BadRequest(description=fetch_validation_error(e)) from e
 
         player = Player()
         player.deserialize(request.json)
