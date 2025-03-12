@@ -111,7 +111,7 @@ def register_error_handlers(app: Flask):
         :param message: The error message.
         :return: Tuple containing the JSON response and HTTP status code.
         """
-        return {"error_code": error_code, "message": message}, error_code
+        return {"message": message}, error_code
 
     @auth.error_handler
     def handle_auth_error(error_code: int) -> Tuple[dict, int]:
