@@ -12,10 +12,18 @@ class Player(db.Model):
     """
     Player database model class
     """
+
+    NUM_OF_MATCHES_DEFAULT = 0
+    RATING_DEFAULT = 1000
+    USERNAME_MAX_LENGTH = 32
+
     __tablename__ = "players"
-    username = db.Column(db.String(32), primary_key=True, nullable=False, unique=True)
-    num_of_matches = db.Column(db.Integer, default=0, nullable=False)
-    rating = db.Column(db.Integer, default=1000, nullable=False)
+    username = db.Column(db.String(USERNAME_MAX_LENGTH),
+                         primary_key=True,
+                         nullable=False,
+                         unique=True)
+    num_of_matches = db.Column(db.Integer, default=NUM_OF_MATCHES_DEFAULT, nullable=False)
+    rating = db.Column(db.Integer, default=RATING_DEFAULT, nullable=False)
     matches = db.relationship("MatchPlayerRelation", back_populates="player", lazy='select')
 
     @validates("username")
@@ -27,8 +35,8 @@ class Player(db.Model):
             raise ValueError(f"{key} must be a string")
         if not value or len(value) < 1:
             raise ValueError(f"{key} must be at least 1 character long")
-        if len(value) > 32:
-            raise ValueError(f"{key} cannot be over 32 characters long")
+        if len(value) > self.USERNAME_MAX_LENGTH:
+            raise ValueError(f"{key} cannot be over {self.USERNAME_MAX_LENGTH} characters long")
         return value
 
     @validates("num_of_matches", "rating")
@@ -56,7 +64,7 @@ class Player(db.Model):
                 "description": "The users' name",
                 "type": "string",
                 "minLength": 1,
-                "maxLength": 32
+                "maxLength": Player.USERNAME_MAX_LENGTH
             },
             "num_of_matches": {
                 "description": "Number of played matches",
@@ -77,8 +85,8 @@ class Player(db.Model):
         Deserialization method for user data
         """
         self.username = data["username"]
-        self.num_of_matches = data.get("num_of_matches", 0)
-        self.rating = data.get("rating", 1000)
+        self.num_of_matches = data.get("num_of_matches", self.NUM_OF_MATCHES_DEFAULT)
+        self.rating = data.get("rating", self.RATING_DEFAULT)
 
     def serialize(self, include_matches: bool = True) -> dict:
         """
@@ -100,15 +108,21 @@ class Match(db.Model):
     """
     Match database model class
     """
+
+    STATUS_DEFAULT = 0
+    TEAM_SCORE_DEFAULT = 0
+    LOCATION_MAX_LENGTH = 50
+    DESCRIPTION_MAX_LENGTH = 100
+
     __tablename__ = "matches"
     id = db.Column(db.Integer, primary_key=True, unique=True, nullable=False)
     location = db.Column(db.String(50), nullable=False)
     time = db.Column(db.DateTime, nullable=False)
     description = db.Column(db.String(100))
-    status = db.Column(db.Integer, default=0, nullable=False)
+    status = db.Column(db.Integer, default=STATUS_DEFAULT, nullable=False)
     rating_shift = db.Column(db.Integer)
-    team1_score = db.Column(db.Integer, default=0)
-    team2_score = db.Column(db.Integer, default=0)
+    team1_score = db.Column(db.Integer, default=TEAM_SCORE_DEFAULT)
+    team2_score = db.Column(db.Integer, default=TEAM_SCORE_DEFAULT)
     players = db.relationship('MatchPlayerRelation', back_populates='match', lazy='select')
 
     @validates("location")
@@ -120,8 +134,8 @@ class Match(db.Model):
             raise ValueError(f"{key} must be a string")
         if not value or len(value) < 1:
             raise ValueError(f"{key} must be 1 character or longer")
-        if len(value) > 50:
-            raise ValueError(f"{key} cannot be longer than 50 characters")
+        if len(value) > self.LOCATION_MAX_LENGTH:
+            raise ValueError(f"{key} cannot be longer than {self.LOCATION_MAX_LENGTH} characters")
         return value
 
     @validates("time")
@@ -141,8 +155,9 @@ class Match(db.Model):
         if value: # nullable
             if not isinstance(value, str):
                 raise ValueError(f"{key} must be in string format")
-            if len(value) > 100:
-                raise ValueError(f"{key} cannot be longer than 100 characters")
+            if len(value) > self.DESCRIPTION_MAX_LENGTH:
+                raise ValueError(f"{key} cannot be longer than "
+                                 f"{self.DESCRIPTION_MAX_LENGTH} characters")
         return value
 
     @validates("status")
@@ -174,7 +189,7 @@ class Match(db.Model):
         if not isinstance(value, int):
             raise ValueError(f"{key} must be an integer")
         if value < 0:
-            raise ValueError(f"{key} cannot be")
+            raise ValueError(f"{key} cannot be negative")
         return value
 
     @staticmethod
@@ -191,7 +206,7 @@ class Match(db.Model):
                 "description": "Physical location of the game",
                 "type": "string",
                 "minLength": 1,
-                "maxLength": 50
+                "maxLength": Match.LOCATION_MAX_LENGTH
             },
             "time": {
                 "description": "UTC timestamp for the game starting time",
@@ -202,7 +217,7 @@ class Match(db.Model):
                 "description": "Optional description, e.g. hashtag for the game",
                 "anyOf": [
                     {"type": "string",
-                     "maxLength": 100
+                     "maxLength": Match.DESCRIPTION_MAX_LENGTH
                     },
                     {"type": "null"}
                 ],
@@ -243,10 +258,10 @@ class Match(db.Model):
         self.location = data["location"]
         self.time = ts_to_datetime(data["time"])  # Convert to datetime or raise BadRequest
         self.description = data.get("description")
-        self.status = data.get('status', 0)
+        self.status = data.get('status', self.STATUS_DEFAULT)
         self.rating_shift = data.get('rating_shift')
-        self.team1_score = data.get('team1_score', 0)
-        self.team2_score = data.get('team2_score', 0)
+        self.team1_score = data.get('team1_score', self.TEAM_SCORE_DEFAULT)
+        self.team2_score = data.get('team2_score', self.TEAM_SCORE_DEFAULT)
 
     def serialize(self, include_players: bool = True) -> dict:
         """

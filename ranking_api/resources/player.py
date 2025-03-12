@@ -78,14 +78,8 @@ class PlayerCollection(Resource):
         except ValidationError as e:
             raise BadRequest(description=str(e)) from e
 
-        data = {
-            "username": request.json["username"],
-            "num_of_matches": request.json.get("num_of_matches"),
-            "rating": request.json.get("rating")
-        }
-
         player = Player()
-        player.deserialize(data)
+        player.deserialize(request.json)
 
         try:
             db.session.add(player)

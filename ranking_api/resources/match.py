@@ -76,18 +76,8 @@ class MatchCollection(Resource):
         except ValidationError as e:
             raise BadRequest(description=str(e)) from e
 
-        data = {
-            "location": request.json["location"],
-            "time": request.json["time"],
-            "description": request.json["description"],
-            "status": request.json["status"],
-            "rating_shift": request.json["rating_shift"],
-            "team1_score": request.json["team1_score"],
-            "team2_score": request.json["team2_score"]
-        }
-
         match = Match()
-        match.deserialize(data)
+        match.deserialize(request.json)
 
         # Match primary key is auto-incrementing ID and other data can be identical
         # -> No need for Integrity check here
