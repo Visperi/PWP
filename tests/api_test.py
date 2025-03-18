@@ -86,7 +86,7 @@ class TestPlayerModel:
 
         # TODO change this after put is implemented
         with pytest.raises(NotImplementedError):
-            test_client.post(f"{self.RESOURCE_URL}{player.username}/",
+            test_client.put(f"{self.RESOURCE_URL}{player.username}/",
                              json=player.serialize(),
                              headers=auth_header)
 
@@ -145,7 +145,7 @@ class TestMatchModel:
         new_match, _ = self.__create_match(test_client, auth_header)
         new_match.location = new_match.location[:-1]
         with pytest.raises(NotImplementedError):
-            test_client.post(f"{self.RESOURCE_URL}1/",
+            test_client.put(f"{self.RESOURCE_URL}1/",
                              json=new_match.serialize(),
                              headers=auth_header)
 

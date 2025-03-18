@@ -44,9 +44,9 @@ class PlayerItem(Resource):
 
     @staticmethod
     @auth.login_required
-    def post(player: Player):
+    def put(player: Player):
         """
-        Player POST method handling 
+        Handle PUT method and update given fields on a Player object.
         """
         # TODO: Implement to support updating player data
         raise NotImplementedError

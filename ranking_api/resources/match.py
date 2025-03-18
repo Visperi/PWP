@@ -45,9 +45,9 @@ class MatchItem(Resource):
 
     @staticmethod
     @auth.login_required
-    def post(match: Match):
+    def put(match: Match):
         """
-        Match POST method handling 
+        Handle PUT method and update given fields on a Match object.
         """
         # TODO: Implement to support updating match data
         raise NotImplementedError
