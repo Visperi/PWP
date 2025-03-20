@@ -101,18 +101,24 @@ class TestPlayerModel:
             assert updated_player[attr_name] == attr_value
 
     def test_missing_put_fields_raises(self, test_client, auth_header):
-        new_player, resp = self.__create_player(test_client, auth_header)
+        """
+        Test that not giving all object fields on PUT requests returns Bad Request error.
+        """
+        _, resp = self.__create_player(test_client, auth_header)
         response = test_client.put(resp.headers["Location"],
                                    json={"username": "testing"},
                                    headers=auth_header)
         assert response.status_code == 400
 
     def test_put_validation(self, test_client, auth_header):
+        """
+        Test the field validation on PUT requests.
+        """
         data = {"username": 564323,
                 "num_of_matches": 0,
                 "rating": 0}
 
-        new_player, resp = self.__create_player(test_client, auth_header)
+        _, resp = self.__create_player(test_client, auth_header)
         response = test_client.put(resp.headers["Location"],
                                    json=data,
                                    headers=auth_header)
@@ -199,7 +205,7 @@ class TestMatchModel:
         """
         Test that not giving all object fields on PUT requests returns Bad Request error.
         """
-        new_match, resp = self.__create_match(test_client, auth_header)
+        _, resp = self.__create_match(test_client, auth_header)
         response = test_client.put(resp.headers["Location"],
                                    json={"location": "testing"},
                                    headers=auth_header)
@@ -217,7 +223,7 @@ class TestMatchModel:
                 "team1_score": 1,
                 "team2_score": 2}
 
-        new_match, resp = self.__create_match(test_client, auth_header)
+        _, resp = self.__create_match(test_client, auth_header)
         response = test_client.put(resp.headers["Location"],
                                    json=data,
                                    headers=auth_header)

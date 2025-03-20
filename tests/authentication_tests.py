@@ -227,7 +227,7 @@ class TestApiAuthentication:
         assert test_client.get(request_url, follow_redirects=True).status_code == 200
 
     @pytest.mark.parametrize("url", (PLAYERS_URL, MATCHES_URL))
-    def test_posts_fail_without_auth(self, test_client, request, url):
+    def test_posts_fail_without_auth(self, test_client, url):
         """
         Test that all POST requests fail without providing API token.
         """
