@@ -100,7 +100,23 @@ class TestPlayerModel:
         for attr_name, attr_value in updated_player.items():
             assert updated_player[attr_name] == attr_value
 
-    # TODO: Test update errors
+    def test_missing_put_fields_raises(self, test_client, auth_header):
+        new_player, resp = self.__create_player(test_client, auth_header)
+        response = test_client.put(resp.headers["Location"],
+                                   json={"username": "testing"},
+                                   headers=auth_header)
+        assert response.status_code == 400
+
+    def test_put_validation(self, test_client, auth_header):
+        data = {"username": 564323,
+                "num_of_matches": 0,
+                "rating": 0}
+
+        new_player, resp = self.__create_player(test_client, auth_header)
+        response = test_client.put(resp.headers["Location"],
+                                   json=data,
+                                   headers=auth_header)
+        assert response.status_code == 400
 
 
 class TestMatchModel:
