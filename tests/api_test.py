@@ -1,6 +1,8 @@
 """
 Module for testing application api endpoints
 """
+from datetime import datetime, timezone, timedelta
+
 import populate_database
 
 
@@ -153,7 +155,6 @@ class TestMatchModel:
 
     def test_update_match(self, test_client, auth_header):
         """Test updating existing match"""
-        from datetime import datetime, timezone, timedelta
         new_attrs = {"location": "test area",
                      "time": datetime.now(timezone.utc) + timedelta(hours=1),
                      "description": "testing testing",
@@ -177,6 +178,34 @@ class TestMatchModel:
                 assert updated_match[attr_name] == str(attr_value.replace(tzinfo=None))
             else:
                 assert updated_match[attr_name] == attr_value
+
+    def test_missing_put_field_raises(self, test_client, auth_header):
+        """
+        Test that not giving all object fields on PUT requests returns Bad Request error.
+        """
+        new_match, resp = self.__create_match(test_client, auth_header)
+        response = test_client.put(resp.headers["Location"],
+                                   json={"location": "testing"},
+                                   headers=auth_header)
+        assert response.status_code == 400
+
+    def test_put_validation(self, test_client, auth_header):
+        """
+        Test the field validation on PUT requests.
+        """
+        data = {"location": "test area",
+                "time": 12345,  # The invalid field
+                "description": "testing testing",
+                "status": 2,
+                "rating_shift": 50,
+                "team1_score": 1,
+                "team2_score": 2}
+
+        new_match, resp = self.__create_match(test_client, auth_header)
+        response = test_client.put(resp.headers["Location"],
+                                   json=data,
+                                   headers=auth_header)
+        assert response.status_code == 400
 
     def test_match_conversion(self, test_client):
         """
