@@ -250,7 +250,7 @@ class TestApiAuthentication:
         assert test_client.delete(request_url, follow_redirects=True).status_code == 401
 
     @pytest.mark.parametrize("url", (PLAYERS_URL, MATCHES_URL))
-    def test_posts_success_with_auth(self, test_client, auth_header, url):  # pylint: disable=R0913,R0917
+    def test_posts_success_with_auth(self, test_client, auth_header, url):
         """
         Test that all POST requests are processed when API token is provided.
         """
