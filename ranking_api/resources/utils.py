@@ -29,11 +29,9 @@ def ts_to_datetime(timestamp: str) -> datetime:
     Convert an ISO8601 timestamp to datetime object or raise an exception,
     if it is not in correct format.
 
-    The timestamp must not have any timezone information.
-
-    :param timestamp: The timestamp
-    :return: The timestamp converted to datetime object
-    :raises BadRequest: If the timestamp is in incorrect format.
+    :param timestamp: The timestamp string to convert.
+    :return: The timestamp converted to datetime object.
+    :raises BadRequest: If the timestamp is not in ISO8601 format.
     """
     try:
         return datetime.fromisoformat(timestamp)
