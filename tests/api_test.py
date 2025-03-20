@@ -1,7 +1,6 @@
 """
 Module for testing application api endpoints
 """
-import pytest
 import populate_database
 
 
@@ -84,11 +83,12 @@ class TestPlayerModel:
         player, _ = self.__create_player(test_client, auth_header)
         player.num_of_matches = 1337
 
-        # TODO change this after put is implemented
-        with pytest.raises(NotImplementedError):
-            test_client.post(f"{self.RESOURCE_URL}{player.username}/",
-                             json=player.serialize(),
-                             headers=auth_header)
+        response = test_client.put(f"{self.RESOURCE_URL}{player.username}/",
+                                   json=player.serialize(),
+                                   headers=auth_header)
+        assert response.status_code == 200
+
+    # TODO: Test update errors
 
 
 class TestMatchModel:
@@ -144,10 +144,10 @@ class TestMatchModel:
         """Test updating existing match"""
         new_match, _ = self.__create_match(test_client, auth_header)
         new_match.location = new_match.location[:-1]
-        with pytest.raises(NotImplementedError):
-            test_client.post(f"{self.RESOURCE_URL}1/",
-                             json=new_match.serialize(),
-                             headers=auth_header)
+        response = test_client.put(f"{self.RESOURCE_URL}1/",
+                                   json=new_match.serialize(),
+                                   headers=auth_header)
+        assert response.status_code == 200
 
     def test_match_conversion(self, test_client):
         """
@@ -183,4 +183,3 @@ class TestMatchPlayerRelation:
     def test_leave_match(self, test_client):
         """Test player leaving match"""
         # leave
-        pass
