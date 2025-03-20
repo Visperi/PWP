@@ -49,8 +49,28 @@ class MatchItem(Resource):
         """
         Handle PUT method and update given fields on a Match object.
         """
-        # TODO: Implement to support updating match data
-        raise NotImplementedError
+        try:
+            new_data = {
+                "location": request.json["location"],
+                "time": request.json["time"],
+                "description": request.json["description"],
+                "status": request.json["status"],
+                "rating_shift": request.json["rating_shift"],
+                "team1_score": request.json["team1_score"],
+                "team2_score": request.json["team2_score"]
+            }
+        except KeyError as e:
+            msg = "All Match object fields are required on PUT requests."
+            raise BadRequest(description=msg) from e
+
+        try:
+            validate(new_data, Match.json_schema())
+        except ValidationError as e:
+            raise BadRequest(description=str(e)) from e
+
+        match.deserialize(new_data)
+        db.session.commit()
+        return Response(status=200, headers={"Location": api.url_for(MatchItem, match=match)})
 
 
 class MatchCollection(Resource):
