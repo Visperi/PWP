@@ -8,6 +8,7 @@ import pytest
 
 from ranking_api.extensions import db
 from ranking_api.authentication import Keyring
+from ranking_api.models import Player, Match
 from ranking_api.secret_models import ApiToken
 from populate_database import generate_match, generate_player
 
@@ -210,6 +211,32 @@ class TestApiAuthentication:
             db.session.commit()
             return player.username
 
+    @pytest.fixture(scope="function")
+    def player_data(self):
+        """
+        Get a dictionary containing complete Player data.
+
+        :return: Random sample of Player data.
+        """
+        return {"username": "aaa",
+                "num_of_matches": 123,
+                "rating": 9999}
+
+    @pytest.fixture(scope="function")
+    def match_data(self):
+        """
+        Get a dictionary containing complete Match data.
+
+        :return: A random sample of Match data.
+        """
+        return {"location": "humunurtsi",
+                "time": str(datetime.now(timezone.utc).replace(tzinfo=None)),
+                "description": "lol",
+                "status": 2,
+                "rating_shift": 10,
+                "team1_score": 2,
+                "team2_score": 1}
+
     @pytest.mark.parametrize("url,fixture", (
             (PLAYERS_URL, None),
             (MATCHES_URL, None),
@@ -226,12 +253,7 @@ class TestApiAuthentication:
 
         assert test_client.get(request_url, follow_redirects=True).status_code == 200
 
-    @pytest.mark.parametrize("url,fixture", (
-            (PLAYERS_URL, None),
-            (MATCHES_URL, None),
-            (PLAYERS_URL, "player_username"),
-            (MATCHES_URL, "match_id")
-    ))
+    @pytest.mark.parametrize("url", (PLAYERS_URL, MATCHES_URL))
     def test_posts_fail_without_auth(self, test_client, request, url, fixture):
         """
         Test that all POST requests fail without providing API token.
@@ -256,28 +278,15 @@ class TestApiAuthentication:
 
         assert test_client.delete(request_url, follow_redirects=True).status_code == 401
 
-    @pytest.mark.parametrize("url,fixture", (
-            (PLAYERS_URL, None),
-            (MATCHES_URL, None),
-            (PLAYERS_URL, "player_username"),
-            (MATCHES_URL, "match_id")
-    ))
-    def test_posts_success_with_auth(self, test_client, auth_header, request, url, fixture):  # pylint: disable=R0913,R0917
+    @pytest.mark.parametrize("url", (PLAYERS_URL, MATCHES_URL))
+    def test_posts_success_with_auth(self, test_client, auth_header, url):  # pylint: disable=R0913,R0917
         """
         Test that all POST requests are processed when API token is provided.
         """
-        request_url = url
-        if fixture:
-            request_url += request.getfixturevalue(fixture)
 
-        # TODO: REMOVE THIS TRY-CATCH after PUT methods are implemented.
-        #  This is a bubble gum fix to avoid the need of modifying parameters.
-        try:
-            assert test_client.post(request_url,
-                                    headers=auth_header,
-                                    follow_redirects=True).status_code != 401
-        except NotImplementedError:
-            pass
+        assert test_client.put(url,
+                               headers=auth_header,
+                               follow_redirects=True).status_code != 401
 
     @pytest.mark.parametrize("url,fixture", (
             (PLAYERS_URL, "player_username"),
@@ -294,3 +303,65 @@ class TestApiAuthentication:
         assert test_client.delete(request_url,
                                   headers=auth_header,
                                   follow_redirects=True).status_code == 204
+
+    @pytest.mark.parametrize("url,fixture", (
+            (PLAYERS_URL, "player_username"),
+            (MATCHES_URL, "match_id")
+    ))
+    def test_put_fails_without_auth(self, test_client, request, url, fixture):
+        """
+        Test that PUT requests fail without proper Authorization header.
+        """
+        request_url = url + request.getfixturevalue(fixture)
+        assert test_client.put(request_url, follow_redirects=True).status_code == 401
+
+    @pytest.mark.parametrize("url,fixture,data_fixture", (
+            (PLAYERS_URL, "player_username", "player_data"),
+            (MATCHES_URL, "match_id", "match_data")
+    ))
+    def test_puts_success_with_auth(self,
+                                    test_client,
+                                    auth_header,
+                                    request,
+                                    url,
+                                    fixture,
+                                    data_fixture):  # pylint: disable=R0913,R0917
+        """
+        Test PUT requests are processed with proper Authorization header.
+        """
+
+        request_url = url + request.getfixturevalue(fixture)
+        data = request.getfixturevalue(data_fixture)
+        assert test_client.put(request_url,
+                               json=data,
+                               headers=auth_header,
+                               follow_redirects=True).status_code == 200
+
+    @pytest.mark.parametrize("url,fixture,data_fixture,model", (
+            (PLAYERS_URL, "player_username", "player_data", Player),
+            (MATCHES_URL, "match_id", "match_data", Match)
+    ))
+    def test_put_success(self,
+                         test_client,
+                         auth_header,
+                         request,
+                         url,
+                         fixture,
+                         data_fixture,
+                         model):  # pylint: disable=R0913,R0917
+        """
+        Test that objects are actually updated after PUT requests.
+        """
+
+        # TODO: Move to another test module. Not scope of authentication tests.
+        data = request.getfixturevalue(data_fixture)
+        obj_location = test_client.put(url + request.getfixturevalue(fixture),
+                                       json=data,
+                                       headers=auth_header,
+                                       follow_redirects=True).headers["Location"]
+
+        updated_object = test_client.get(obj_location).json
+        schema_fields = model.json_schema()["properties"].keys()
+
+        for field_name in schema_fields:
+            assert updated_object[field_name] == data[field_name]
