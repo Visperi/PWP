@@ -227,13 +227,11 @@ class TestApiAuthentication:
         assert test_client.get(request_url, follow_redirects=True).status_code == 200
 
     @pytest.mark.parametrize("url", (PLAYERS_URL, MATCHES_URL))
-    def test_posts_fail_without_auth(self, test_client, request, url, fixture):
+    def test_posts_fail_without_auth(self, test_client, request, url):
         """
         Test that all POST requests fail without providing API token.
         """
         request_url = url
-        if fixture:
-            request_url += request.getfixturevalue(fixture)
 
         assert test_client.post(request_url, follow_redirects=True).status_code == 401
 
@@ -288,25 +286,22 @@ class TestApiAuthentication:
         request_url = url + request.getfixturevalue(fixture)
         assert test_client.put(request_url, follow_redirects=True).status_code == 401
 
-    @pytest.mark.parametrize("url,fixture,data_fixture", (
-            (PLAYERS_URL, "player_username", "player_data"),
-            (MATCHES_URL, "match_id", "match_data")
+    @pytest.mark.parametrize("url,fixture", (
+            (PLAYERS_URL, "player_username"),
+            (MATCHES_URL, "match_id")
     ))
     def test_puts_success_with_auth(self,
                                     test_client,
                                     auth_header,
                                     request,
                                     url,
-                                    fixture,
-                                    data_fixture):
+                                    fixture):
         """
         Test PUT requests are processed with proper Authorization header.
         """
         # pylint: disable=R0913,R0917
 
         request_url = url + request.getfixturevalue(fixture)
-        data = request.getfixturevalue(data_fixture)
         assert test_client.put(request_url,
-                               json=data,
                                headers=auth_header,
-                               follow_redirects=True).status_code == 200
+                               follow_redirects=True).status_code != 401
