@@ -61,7 +61,7 @@ class PlayerItem(Resource):
         try:
             validate(new_data, Player.json_schema())
         except ValidationError as e:
-            raise BadRequest(description=str(e)) from e
+            raise BadRequest(description=fetch_validation_error(e)) from e
 
         player.deserialize(new_data)
         db.session.commit()
