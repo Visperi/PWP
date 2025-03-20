@@ -8,7 +8,6 @@ import pytest
 
 from ranking_api.extensions import db
 from ranking_api.authentication import Keyring
-from ranking_api.models import Player, Match
 from ranking_api.secret_models import ApiToken
 from populate_database import generate_match, generate_player
 
@@ -211,32 +210,6 @@ class TestApiAuthentication:
             db.session.commit()
             return player.username
 
-    @pytest.fixture(scope="function")
-    def player_data(self):
-        """
-        Get a dictionary containing complete Player data.
-
-        :return: Random sample of Player data.
-        """
-        return {"username": "aaa",
-                "num_of_matches": 123,
-                "rating": 9999}
-
-    @pytest.fixture(scope="function")
-    def match_data(self):
-        """
-        Get a dictionary containing complete Match data.
-
-        :return: A random sample of Match data.
-        """
-        return {"location": "humunurtsi",
-                "time": str(datetime.now(timezone.utc).replace(tzinfo=None)),
-                "description": "lol",
-                "status": 2,
-                "rating_shift": 10,
-                "team1_score": 2,
-                "team2_score": 1}
-
     @pytest.mark.parametrize("url,fixture", (
             (PLAYERS_URL, None),
             (MATCHES_URL, None),
@@ -337,33 +310,3 @@ class TestApiAuthentication:
                                json=data,
                                headers=auth_header,
                                follow_redirects=True).status_code == 200
-
-    @pytest.mark.parametrize("url,fixture,data_fixture,model", (
-            (PLAYERS_URL, "player_username", "player_data", Player),
-            (MATCHES_URL, "match_id", "match_data", Match)
-    ))
-    def test_put_success(self,
-                         test_client,
-                         auth_header,
-                         request,
-                         url,
-                         fixture,
-                         data_fixture,
-                         model):
-        """
-        Test that objects are actually updated after PUT requests.
-        """
-        # pylint: disable=R0913,R0917
-
-        # TODO: Move to another test module. Not scope of authentication tests.
-        data = request.getfixturevalue(data_fixture)
-        obj_location = test_client.put(url + request.getfixturevalue(fixture),
-                                       json=data,
-                                       headers=auth_header,
-                                       follow_redirects=True).headers["Location"]
-
-        updated_object = test_client.get(obj_location).json
-        schema_fields = model.json_schema()["properties"].keys()
-
-        for field_name in schema_fields:
-            assert updated_object[field_name] == data[field_name]

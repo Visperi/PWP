@@ -80,13 +80,23 @@ class TestPlayerModel:
 
     def test_update_player(self, test_client, auth_header):
         """Try updating existing player"""
-        player, _ = self.__create_player(test_client, auth_header)
-        player.num_of_matches = 1337
+        new_attrs = {"username": "test",
+                     "num_of_matches": 1337,
+                     "rating": 12345}
 
-        response = test_client.put(f"{self.RESOURCE_URL}{player.username}/",
+        player, _ = self.__create_player(test_client, auth_header)
+        original_name = player.username
+        for attr_name, attr_value in new_attrs.items():
+            setattr(player, attr_name, attr_value)
+
+        response = test_client.put(f"{self.RESOURCE_URL}{original_name}/",
                                    json=player.serialize(),
                                    headers=auth_header)
         assert response.status_code == 200
+
+        updated_player = test_client.get(response.headers["Location"]).json
+        for attr_name, attr_value in updated_player.items():
+            assert updated_player[attr_name] == attr_value
 
     # TODO: Test update errors
 
@@ -119,6 +129,7 @@ class TestMatchModel:
 
     def test_get_match(self, test_client, auth_header):
         """Test get single match"""
+
         new_match, _ = self.__create_match(test_client, auth_header)
         response = test_client.get(f"{self.RESOURCE_URL}1/", headers=auth_header)
         assert response.status_code == 200
@@ -142,12 +153,30 @@ class TestMatchModel:
 
     def test_update_match(self, test_client, auth_header):
         """Test updating existing match"""
-        new_match, _ = self.__create_match(test_client, auth_header)
-        new_match.location = new_match.location[:-1]
-        response = test_client.put(f"{self.RESOURCE_URL}1/",
+        from datetime import datetime, timezone, timedelta
+        new_attrs = {"location": "test area",
+                     "time": datetime.now(timezone.utc) + timedelta(hours=1),
+                     "description": "testing testing",
+                     "status": 2,
+                     "rating_shift": 50,
+                     "team1_score": 1,
+                     "team2_score": 2}
+
+        new_match, resp = self.__create_match(test_client, auth_header)
+        for attr_name, attr_value in new_attrs.items():
+            setattr(new_match, attr_name, attr_value)
+
+        response = test_client.put(resp.headers["Location"],
                                    json=new_match.serialize(),
                                    headers=auth_header)
         assert response.status_code == 200
+
+        updated_match = test_client.get(resp.headers["Location"]).json
+        for attr_name, attr_value in new_attrs.items():
+            if attr_name == "time":
+                assert updated_match[attr_name] == str(attr_value.replace(tzinfo=None))
+            else:
+                assert updated_match[attr_name] == attr_value
 
     def test_match_conversion(self, test_client):
         """
