@@ -325,10 +325,11 @@ class TestApiAuthentication:
                                     request,
                                     url,
                                     fixture,
-                                    data_fixture):  # pylint: disable=R0913,R0917
+                                    data_fixture):
         """
         Test PUT requests are processed with proper Authorization header.
         """
+        # pylint: disable=R0913,R0917
 
         request_url = url + request.getfixturevalue(fixture)
         data = request.getfixturevalue(data_fixture)
@@ -348,10 +349,11 @@ class TestApiAuthentication:
                          url,
                          fixture,
                          data_fixture,
-                         model):  # pylint: disable=R0913,R0917
+                         model):
         """
         Test that objects are actually updated after PUT requests.
         """
+        # pylint: disable=R0913,R0917
 
         # TODO: Move to another test module. Not scope of authentication tests.
         data = request.getfixturevalue(data_fixture)
