@@ -226,19 +226,12 @@ class TestApiAuthentication:
 
         assert test_client.get(request_url, follow_redirects=True).status_code == 200
 
-    @pytest.mark.parametrize("url,fixture", (
-            (PLAYERS_URL, None),
-            (MATCHES_URL, None),
-            (PLAYERS_URL, "player_username"),
-            (MATCHES_URL, "match_id")
-    ))
-    def test_posts_fail_without_auth(self, test_client, request, url, fixture):
+    @pytest.mark.parametrize("url", (PLAYERS_URL, MATCHES_URL))
+    def test_posts_fail_without_auth(self, test_client, url):
         """
         Test that all POST requests fail without providing API token.
         """
         request_url = url
-        if fixture:
-            request_url += request.getfixturevalue(fixture)
 
         assert test_client.post(request_url, follow_redirects=True).status_code == 401
 
@@ -256,28 +249,15 @@ class TestApiAuthentication:
 
         assert test_client.delete(request_url, follow_redirects=True).status_code == 401
 
-    @pytest.mark.parametrize("url,fixture", (
-            (PLAYERS_URL, None),
-            (MATCHES_URL, None),
-            (PLAYERS_URL, "player_username"),
-            (MATCHES_URL, "match_id")
-    ))
-    def test_posts_success_with_auth(self, test_client, auth_header, request, url, fixture):  # pylint: disable=R0913,R0917
+    @pytest.mark.parametrize("url", (PLAYERS_URL, MATCHES_URL))
+    def test_posts_success_with_auth(self, test_client, auth_header, url):
         """
         Test that all POST requests are processed when API token is provided.
         """
-        request_url = url
-        if fixture:
-            request_url += request.getfixturevalue(fixture)
 
-        # TODO: REMOVE THIS TRY-CATCH after PUT methods are implemented.
-        #  This is a bubble gum fix to avoid the need of modifying parameters.
-        try:
-            assert test_client.post(request_url,
-                                    headers=auth_header,
-                                    follow_redirects=True).status_code != 401
-        except NotImplementedError:
-            pass
+        assert test_client.put(url,
+                               headers=auth_header,
+                               follow_redirects=True).status_code != 401
 
     @pytest.mark.parametrize("url,fixture", (
             (PLAYERS_URL, "player_username"),
@@ -294,3 +274,34 @@ class TestApiAuthentication:
         assert test_client.delete(request_url,
                                   headers=auth_header,
                                   follow_redirects=True).status_code == 204
+
+    @pytest.mark.parametrize("url,fixture", (
+            (PLAYERS_URL, "player_username"),
+            (MATCHES_URL, "match_id")
+    ))
+    def test_put_fails_without_auth(self, test_client, request, url, fixture):
+        """
+        Test that PUT requests fail without proper Authorization header.
+        """
+        request_url = url + request.getfixturevalue(fixture)
+        assert test_client.put(request_url, follow_redirects=True).status_code == 401
+
+    @pytest.mark.parametrize("url,fixture", (
+            (PLAYERS_URL, "player_username"),
+            (MATCHES_URL, "match_id")
+    ))
+    def test_puts_success_with_auth(self,
+                                    test_client,
+                                    auth_header,
+                                    request,
+                                    url,
+                                    fixture):
+        """
+        Test PUT requests are processed with proper Authorization header.
+        """
+        # pylint: disable=R0913,R0917
+
+        request_url = url + request.getfixturevalue(fixture)
+        assert test_client.put(request_url,
+                               headers=auth_header,
+                               follow_redirects=True).status_code != 401

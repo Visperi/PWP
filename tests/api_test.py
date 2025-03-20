@@ -1,7 +1,8 @@
 """
 Module for testing application api endpoints
 """
-import pytest
+from datetime import datetime, timezone, timedelta
+
 import populate_database
 
 
@@ -81,14 +82,47 @@ class TestPlayerModel:
 
     def test_update_player(self, test_client, auth_header):
         """Try updating existing player"""
-        player, _ = self.__create_player(test_client, auth_header)
-        player.num_of_matches = 1337
+        new_attrs = {"username": "test",
+                     "num_of_matches": 1337,
+                     "rating": 12345}
 
-        # TODO change this after put is implemented
-        with pytest.raises(NotImplementedError):
-            test_client.post(f"{self.RESOURCE_URL}{player.username}/",
-                             json=player.serialize(),
-                             headers=auth_header)
+        player, _ = self.__create_player(test_client, auth_header)
+        original_name = player.username
+        for attr_name, attr_value in new_attrs.items():
+            setattr(player, attr_name, attr_value)
+
+        response = test_client.put(f"{self.RESOURCE_URL}{original_name}/",
+                                   json=player.serialize(),
+                                   headers=auth_header)
+        assert response.status_code == 200
+
+        updated_player = test_client.get(response.headers["Location"]).json
+        for attr_name, attr_value in updated_player.items():
+            assert updated_player[attr_name] == attr_value
+
+    def test_missing_put_fields_raises(self, test_client, auth_header):
+        """
+        Test that not giving all object fields on PUT requests returns Bad Request error.
+        """
+        _, resp = self.__create_player(test_client, auth_header)
+        response = test_client.put(resp.headers["Location"],
+                                   json={"username": "testing"},
+                                   headers=auth_header)
+        assert response.status_code == 400
+
+    def test_put_validation(self, test_client, auth_header):
+        """
+        Test the field validation on PUT requests.
+        """
+        data = {"username": 564323,
+                "num_of_matches": 0,
+                "rating": 0}
+
+        _, resp = self.__create_player(test_client, auth_header)
+        response = test_client.put(resp.headers["Location"],
+                                   json=data,
+                                   headers=auth_header)
+        assert response.status_code == 400
 
 
 class TestMatchModel:
@@ -119,6 +153,7 @@ class TestMatchModel:
 
     def test_get_match(self, test_client, auth_header):
         """Test get single match"""
+
         new_match, _ = self.__create_match(test_client, auth_header)
         response = test_client.get(f"{self.RESOURCE_URL}1/", headers=auth_header)
         assert response.status_code == 200
@@ -142,12 +177,57 @@ class TestMatchModel:
 
     def test_update_match(self, test_client, auth_header):
         """Test updating existing match"""
-        new_match, _ = self.__create_match(test_client, auth_header)
-        new_match.location = new_match.location[:-1]
-        with pytest.raises(NotImplementedError):
-            test_client.post(f"{self.RESOURCE_URL}1/",
-                             json=new_match.serialize(),
-                             headers=auth_header)
+        new_attrs = {"location": "test area",
+                     "time": datetime.now(timezone.utc) + timedelta(hours=1),
+                     "description": "testing testing",
+                     "status": 2,
+                     "rating_shift": 50,
+                     "team1_score": 1,
+                     "team2_score": 2}
+
+        new_match, resp = self.__create_match(test_client, auth_header)
+        for attr_name, attr_value in new_attrs.items():
+            setattr(new_match, attr_name, attr_value)
+
+        response = test_client.put(resp.headers["Location"],
+                                   json=new_match.serialize(),
+                                   headers=auth_header)
+        assert response.status_code == 200
+
+        updated_match = test_client.get(resp.headers["Location"]).json
+        for attr_name, attr_value in new_attrs.items():
+            if attr_name == "time":
+                assert updated_match[attr_name] == str(attr_value.replace(tzinfo=None))
+            else:
+                assert updated_match[attr_name] == attr_value
+
+    def test_missing_put_field_raises(self, test_client, auth_header):
+        """
+        Test that not giving all object fields on PUT requests returns Bad Request error.
+        """
+        _, resp = self.__create_match(test_client, auth_header)
+        response = test_client.put(resp.headers["Location"],
+                                   json={"location": "testing"},
+                                   headers=auth_header)
+        assert response.status_code == 400
+
+    def test_put_validation(self, test_client, auth_header):
+        """
+        Test the field validation on PUT requests.
+        """
+        data = {"location": "test area",
+                "time": 12345,  # The invalid field
+                "description": "testing testing",
+                "status": 2,
+                "rating_shift": 50,
+                "team1_score": 1,
+                "team2_score": 2}
+
+        _, resp = self.__create_match(test_client, auth_header)
+        response = test_client.put(resp.headers["Location"],
+                                   json=data,
+                                   headers=auth_header)
+        assert response.status_code == 400
 
     def test_match_conversion(self, test_client):
         """
@@ -183,4 +263,3 @@ class TestMatchPlayerRelation:
     def test_leave_match(self, test_client):
         """Test player leaving match"""
         # leave
-        pass

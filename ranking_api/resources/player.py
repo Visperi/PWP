@@ -44,12 +44,28 @@ class PlayerItem(Resource):
 
     @staticmethod
     @auth.login_required
-    def post(player: Player):
+    def put(player: Player):
         """
-        Player POST method handling 
+        Handle PUT method and update given fields on a Player object.
         """
-        # TODO: Implement to support updating player data
-        raise NotImplementedError
+        try:
+            new_data = {
+                "username": request.json["username"],
+                "num_of_matches": request.json["num_of_matches"],
+                "rating": request.json["rating"]
+            }
+        except KeyError as e:
+            msg = "All Player object fields are required on PUT requests."
+            raise BadRequest(description=msg) from e
+
+        try:
+            validate(new_data, Player.json_schema())
+        except ValidationError as e:
+            raise BadRequest(description=str(e)) from e
+
+        player.deserialize(new_data)
+        db.session.commit()
+        return Response(status=200, headers={"Location": api.url_for(PlayerItem, player=player)})
 
 
 class PlayerCollection(Resource):
