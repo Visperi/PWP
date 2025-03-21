@@ -1,5 +1,5 @@
 """
-API representation of match resources
+API representation of player resources.
 """
 from flask import (
     request,
@@ -23,12 +23,17 @@ from .utils import str_to_bool
 
 class PlayerItem(Resource):
     """
-    Player api resources
+    Represents a singe Player resource and its HTTP methods in the API.
+    PlayerConverter is used to pair a username to an actual Player object during requests.
+    HTTP404 is raised if a Player with username does not exist.
     """
     @staticmethod
     def get(player: Player) -> dict:
         """
-        Player GET method handling 
+        GET method handler to fetch a serialized Player object from the database.
+
+        :param player: The Player object.
+        :return: HTTP200 response with The Player object as a serialized JSON in the response body.
         """
         return player.serialize()
 
@@ -36,7 +41,10 @@ class PlayerItem(Resource):
     @auth.login_required
     def delete(player: Player):
         """
-        Player DELETE method handling 
+        DELETE method handler to delete a Player object from the database.
+
+        :param player: The Player object to delete.
+        :return: HTTP204 response.
         """
         db.session.delete(player)
         db.session.commit()
@@ -46,7 +54,10 @@ class PlayerItem(Resource):
     @auth.login_required
     def put(player: Player):
         """
-        Handle PUT method and update given fields on a Player object.
+        PUT method handler to modify an existing Player object in the database.
+
+        :param player: The Player object to modify.
+        :return: HTTP200 response with the modified Player object path in Location header.
         """
         try:
             new_data = {
@@ -70,12 +81,17 @@ class PlayerItem(Resource):
 
 class PlayerCollection(Resource):
     """
-    Players api resources
+    Represents a collection of players and HTTP methods for collection requests.
     """
+
     @staticmethod
     def get():
         """
-        Handle GET method for all players
+        GET method handler to fetch collection of Player objects from the database.
+        Supports a query parameter include_matches (default: True) for fetching also
+        the players matches with the data.
+
+        :return: HTTP200 response with a list of Player objects as serialized JSONs in the body.
         """
         # Parse possible query parameter for including or excluding matches for players
         include_matches = request.args.get("include_matches", default=True, type=str_to_bool)
@@ -87,7 +103,10 @@ class PlayerCollection(Resource):
     @auth.login_required
     def post():
         """
-        Handle POST method for players
+        POST method handler to create a new Player object into the database.
+
+        :return: HTTP201 response with the created object path in Location header.
+                 HTTP400 response if the provided data is not valid.
         """
         try:
             validate(request.json, Player.json_schema())
@@ -111,13 +130,27 @@ class PlayerCollection(Resource):
 
 class PlayerConverter(BaseConverter):
     """
-    Converter class for matches (str - python)
+    A converter class responsible for Player object conversions for PlayerItem methods.
+    Converts usernames from requests to Player objects, or vice versa Player objects to usernames.
     """
     def to_python(self, value: str) -> Player:
+        """
+        Convert a username to a Player object.
+
+        :param value: The players' username.
+        :return: The Player object corresponding to the username.
+        :raises: NotFound HTTP404 response if a Player object with the username is not in database.
+        """
         player = Player.query.filter_by(username=value).first()
         if player is None:
             raise NotFound
         return player
 
     def to_url(self, value: Player) -> str:
+        """
+        Convert a Player object to string containing its username.
+
+        :param value: The Player object.
+        :return: The player username.
+        """
         return value.username
