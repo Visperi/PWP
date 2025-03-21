@@ -1,5 +1,5 @@
 """
-API representation of match resources
+API representation of match resources.
 """
 from flask import (
     request,
@@ -25,12 +25,18 @@ from .utils import fetch_validation_error
 
 class MatchItem(Resource):
     """
-    Match api resources
+    Represents a singe Match resource and its HTTP methods in the API.
+    MatchConverter is used to pair an ID to an actual Match object during requests.
+    HTTP404 is raised if a Match with ID does not exist.
     """
+
     @staticmethod
     def get(match: Match) -> dict:
         """
-        Match GET method handling 
+        GET method handler to fetch a serialized Match object from the database.
+
+        :param match: The Match object.
+        :return: HTTP200 response with The Match object as a serialized JSON in the response body.
         """
         return match.serialize()
 
@@ -38,7 +44,10 @@ class MatchItem(Resource):
     @auth.login_required
     def delete(match: Match):
         """
-        Match DELETE method handling 
+        DELETE method handler to delete a Match object from the database.
+
+        :param match: The Match object to delete.
+        :return: HTTP204 response.
         """
         db.session.delete(match)
         db.session.commit()
@@ -48,40 +57,40 @@ class MatchItem(Resource):
     @auth.login_required
     def put(match: Match):
         """
-        Handle PUT method and update given fields on a Match object.
+        PUT method handler to modify an existing Match object in the database.
+
+        :param match: The Match object to modify.
+        :return: HTTP200 response with the modified Match object path in Location header.
         """
+        # Update schema to require all properties
+        schema = Match.json_schema()
+        schema["required"] = list(schema["properties"].keys())
+
         try:
-            new_data = {
-                "location": request.json["location"],
-                "time": request.json["time"],
-                "description": request.json["description"],
-                "status": request.json["status"],
-                "rating_shift": request.json["rating_shift"],
-                "team1_score": request.json["team1_score"],
-                "team2_score": request.json["team2_score"]
-            }
-        except KeyError as e:
-            msg = "All Match object fields are required on PUT requests."
+            validate(request.json, schema)
+        except ValidationError as e:
+            if list(request.json.keys()) != schema["required"]:
+                msg = "All Match object fields are required in PUT requests."
+            else:
+                msg = fetch_validation_error(e)
             raise BadRequest(description=msg) from e
 
-        try:
-            validate(new_data, Match.json_schema())
-        except ValidationError as e:
-            raise BadRequest(description=fetch_validation_error(e)) from e
-
-        match.deserialize(new_data)
+        match.deserialize(request.json)
         db.session.commit()
         return Response(status=200, headers={"Location": api.url_for(MatchItem, match=match)})
 
 
 class MatchCollection(Resource):
     """
-    Matches api resources
+    Represents a collection of matches and HTTP methods for collection requests.
     """
+
     @staticmethod
     def get():
         """
-        Handle GET method for all matches
+        GET method handler to fetch collection of Match objects from the database.
+
+        :return: HTTP200 response with a list of Match objects as serialized JSONs in the body.
         """
         matches = Match.query.all()
         return [match.serialize() for match in matches]
@@ -90,7 +99,10 @@ class MatchCollection(Resource):
     @auth.login_required
     def post():
         """
-        Handle POST method for matches
+        POST method handler to create a new Match object into the database.
+
+        :return: HTTP201 response with the created object path in Location header.
+                 HTTP400 response if the provided data is not valid.
         """
         try:
             validate(request.json, Match.json_schema(), format_checker=D7Validator.FORMAT_CHECKER)
@@ -111,13 +123,28 @@ class MatchCollection(Resource):
 
 class MatchConverter(BaseConverter):
     """
-    Converter class for matches (str - python)
+    A converter class responsible for Match object conversions for MatchItem methods.
+    Converts IDs from requests to Match objects, or vice versa Match objects to IDs.
     """
+
     def to_python(self, value: str) -> Match:
+        """
+        Convert an ID to a Match object.
+
+        :param value: The match ID.
+        :return: The Match object corresponding to the ID.
+        :raises: NotFound HTTP404 response if a Match object with the ID is not in database.
+        """
         match = Match.query.filter_by(id=value).first()
         if match is None:
             raise NotFound(description=f"No such match with ID {value}")
         return match
 
     def to_url(self, value: Match) -> str:
+        """
+        Convert a Match object to string containing its ID.
+
+        :param value: The Match object.
+        :return: The match ID as a string.
+        """
         return str(value.id)
