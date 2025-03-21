@@ -1,5 +1,5 @@
 """
-Utility module for processing HTTP methods for resources.
+Utility module for API resource HTTP methods.
 """
 
 from datetime import datetime
