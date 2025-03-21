@@ -5,7 +5,7 @@ Utility module for API resource HTTP methods.
 from datetime import datetime
 
 from werkzeug.exceptions import BadRequest
-from jsonschema import ValidationError
+from jsonschema import validate, ValidationError
 
 
 def str_to_bool(value: str) -> bool:
@@ -53,3 +53,24 @@ def fetch_validation_error(error: ValidationError):
     else:
         variable_name = error.relative_path[0]
     return f"Error on value {variable_name}: {error.message}"
+
+
+def validate_put_request_properties(schema, data):
+    """
+    Validate received object properties for PUT requests. Raise an exception if validation fails.
+
+    :param schema: The object schema to validate against.
+    :param data: The received request data.
+    :return: None if the data is valid, else raise a BadRequest error.
+    """
+    # Update the schema to require all properties
+    schema["required"] = list(schema["properties"].keys())
+
+    try:
+        validate(data, schema)
+    except ValidationError as e:
+        if list(data.keys()) != schema["required"]:
+            msg = "All object fields are required in PUT requests."
+        else:
+            msg = fetch_validation_error(e)
+        raise BadRequest(description=msg) from e

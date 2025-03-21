@@ -18,7 +18,7 @@ from sqlalchemy.exc import IntegrityError
 from ranking_api.extensions import api, db
 from ranking_api.authentication import auth
 from ranking_api.models import Player
-from .utils import str_to_bool, fetch_validation_error
+from .utils import str_to_bool, validate_put_request_properties, fetch_validation_error
 
 
 class PlayerItem(Resource):
@@ -58,21 +58,9 @@ class PlayerItem(Resource):
 
         :param player: The Player object to modify.
         :return: HTTP200 response with the modified Player object path in Location header.
+        :raises: BadRequest HTTP400 error if the object fields are invalid.
         """
-        # Update schema to require all properties
-        schema = Player.json_schema()
-        schema_properties = schema["properties"].keys()
-        schema["required"] = list(schema["properties"].keys())
-
-        try:
-            validate(request.json, schema)
-        except ValidationError as e:
-            if list(request.json.keys()) != schema["required"]:
-                msg = "All Player object fields are required in PUT requests."
-            else:
-                msg = fetch_validation_error(e)
-            raise BadRequest(description=msg) from e
-
+        validate_put_request_properties(Player.json_schema(), request.json)
         player.deserialize(request.json)
         db.session.commit()
         return Response(status=200, headers={"Location": api.url_for(PlayerItem, player=player)})
