@@ -59,22 +59,21 @@ class PlayerItem(Resource):
         :param player: The Player object to modify.
         :return: HTTP200 response with the modified Player object path in Location header.
         """
+        # Update schema to require all properties
+        schema = Player.json_schema()
+        schema_properties = schema["properties"].keys()
+        schema["required"] = list(schema["properties"].keys())
+
         try:
-            new_data = {
-                "username": request.json["username"],
-                "num_of_matches": request.json["num_of_matches"],
-                "rating": request.json["rating"]
-            }
-        except KeyError as e:
-            msg = "All Player object fields are required on PUT requests."
+            validate(request.json, schema)
+        except ValidationError as e:
+            if list(request.json.keys()) != schema["required"]:
+                msg = "All Player object fields are required in PUT requests."
+            else:
+                msg = str(e)
             raise BadRequest(description=msg) from e
 
-        try:
-            validate(new_data, Player.json_schema())
-        except ValidationError as e:
-            raise BadRequest(description=str(e)) from e
-
-        player.deserialize(new_data)
+        player.deserialize(request.json)
         db.session.commit()
         return Response(status=200, headers={"Location": api.url_for(PlayerItem, player=player)})
 
