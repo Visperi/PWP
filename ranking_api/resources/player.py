@@ -18,7 +18,7 @@ from sqlalchemy.exc import IntegrityError
 from ranking_api.extensions import api, db
 from ranking_api.authentication import auth
 from ranking_api.models import Player
-from .utils import str_to_bool, validate_put_request_properties
+from .utils import str_to_bool, validate_put_request_properties, fetch_validation_error
 
 
 class PlayerItem(Resource):
@@ -98,7 +98,7 @@ class PlayerCollection(Resource):
         try:
             validate(request.json, Player.json_schema())
         except ValidationError as e:
-            raise BadRequest(description=str(e)) from e
+            raise BadRequest(description=fetch_validation_error(e)) from e
 
         player = Player()
         player.deserialize(request.json)
@@ -130,7 +130,7 @@ class PlayerConverter(BaseConverter):
         """
         player = Player.query.filter_by(username=value).first()
         if player is None:
-            raise NotFound
+            raise NotFound(description=f"No such player with username {value}")
         return player
 
     def to_url(self, value: Player) -> str:

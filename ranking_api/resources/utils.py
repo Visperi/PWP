@@ -40,6 +40,21 @@ def ts_to_datetime(timestamp: str) -> datetime:
         raise BadRequest("Bad datetime format") from exc
 
 
+def fetch_validation_error(error: ValidationError):
+    """
+    Fetch a short and useful validation error message from a ValidationError.
+    There is no need to send the full message with all field rules to the client.
+
+    :param error: The triggered ValidationError.
+    :return: An error message in format 'field_name: error_cause'
+    """
+    if error.validator == "required":
+        variable_name = error.validator_value[0]
+    else:
+        variable_name = error.relative_path[0]
+    return f"Error on value {variable_name}: {error.message}"
+
+
 def validate_put_request_properties(schema, data):
     """
     Validate received object properties for PUT requests. Raise an exception if validation fails.
@@ -57,5 +72,5 @@ def validate_put_request_properties(schema, data):
         if list(data.keys()) != schema["required"]:
             msg = "All object fields are required in PUT requests."
         else:
-            msg = str(e)
+            msg = fetch_validation_error(e)
         raise BadRequest(description=msg) from e
