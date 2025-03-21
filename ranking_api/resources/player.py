@@ -61,7 +61,6 @@ class PlayerItem(Resource):
         """
         # Update schema to require all properties
         schema = Player.json_schema()
-        schema_properties = schema["properties"].keys()
         schema["required"] = list(schema["properties"].keys())
 
         try:
