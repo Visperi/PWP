@@ -20,6 +20,7 @@ from jsonschema import (
 from ranking_api.extensions import api, db
 from ranking_api.authentication import auth
 from ranking_api.models import Match
+from .utils import validate_put_request_properties
 
 
 class MatchItem(Resource):
@@ -60,20 +61,9 @@ class MatchItem(Resource):
 
         :param match: The Match object to modify.
         :return: HTTP200 response with the modified Match object path in Location header.
+        :raises: BadRequest HTTP400 error if the object fields are invalid.
         """
-        # Update schema to require all properties
-        schema = Match.json_schema()
-        schema["required"] = list(schema["properties"].keys())
-
-        try:
-            validate(request.json, schema)
-        except ValidationError as e:
-            if list(request.json.keys()) != schema["required"]:
-                msg = "All Match object fields are required in PUT requests."
-            else:
-                msg = str(e)
-            raise BadRequest(description=msg) from e
-
+        validate_put_request_properties(Match.json_schema(), request.json)
         match.deserialize(request.json)
         db.session.commit()
         return Response(status=200, headers={"Location": api.url_for(MatchItem, match=match)})

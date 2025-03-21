@@ -5,6 +5,7 @@ Utility module for API resource HTTP methods.
 from datetime import datetime
 
 from werkzeug.exceptions import BadRequest
+from jsonschema import validate, ValidationError
 
 
 def str_to_bool(value: str) -> bool:
@@ -37,3 +38,24 @@ def ts_to_datetime(timestamp: str) -> datetime:
         return datetime.fromisoformat(timestamp)
     except ValueError as exc:
         raise BadRequest("Bad datetime format") from exc
+
+
+def validate_put_request_properties(schema, data):
+    """
+    Validate received object properties for PUT requests. Raise an exception if validation fails.
+
+    :param schema: The object schema to validate against.
+    :param data: The received request data.
+    :return: None if the data is valid, else raise a BadRequest error.
+    """
+    # Update the schema to require all properties
+    schema["required"] = list(schema["properties"].keys())
+
+    try:
+        validate(data, schema)
+    except ValidationError as e:
+        if list(data.keys()) != schema["required"]:
+            msg = "All object fields are required in PUT requests."
+        else:
+            msg = str(e)
+        raise BadRequest(description=msg) from e
