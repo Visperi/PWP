@@ -40,7 +40,7 @@ def ts_to_datetime(timestamp: str) -> datetime:
         raise BadRequest("Bad datetime format") from exc
 
 
-def validate_put_request_properties(schema, data):
+def validate_put_request_properties(schema: dict, data: dict):
     """
     Validate received object properties for PUT requests. Raise an exception if validation fails.
 
