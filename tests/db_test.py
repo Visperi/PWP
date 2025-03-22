@@ -2,6 +2,8 @@
 Module for testing database models
 """
 import datetime
+from contextlib import nullcontext as does_not_raise
+
 import pytest
 from sqlalchemy.engine import Engine
 from sqlalchemy import event
@@ -21,63 +23,50 @@ def set_sqlite_pragma(dbapi_connection, connection_record): # pylint: disable=W0
     cursor.close()
 
 @pytest.mark.parametrize(
-    'inputs, expected, exception',
+    'inputs, expected, expectation',
     [
         # (username, num_of_matches, rating),
         # (exp_username, exp_num_of_matches, exp_rating),
         # Expected exception,
         (("uname", None, None),
          ("uname", 0, 1000),
-         None), # test default value setting works
+         does_not_raise()), # test default value setting works
         (("uname", 73, 1337),
          ("uname", 73, 1337),
-         None), # test custom value setting works
+         does_not_raise()), # test custom value setting works
         ((None, None, None),
          None,
-         ValueError), # test correct error is raised if no username is supplied
+         pytest.raises(ValueError)), # test correct error is raised if no username is supplied
         (("", 73, 1337),
          None,
-         ValueError), # test correct error is raised if username is too short
+         pytest.raises(ValueError)), # test correct error is raised if username is too short
         (("a"*35, None, None),
          None,
-         ValueError), # test correct error is raised if username is too long
+         pytest.raises(ValueError)), # test correct error is raised if username is too long
         (("uname", -1, None),
          None,
-         ValueError), # test correct error is raised if num of matches is negative
+         pytest.raises(ValueError)), # test correct error is raised if num of matches is negative
         (("uname", None, -1),
          None,
-         ValueError), # test correct error is raised if rating is negative
+         pytest.raises(ValueError)), # test correct error is raised if rating is negative
         (("uname", None, "ggg"),
          None,
-         ValueError), # test correct error is raised if rating is not int
+         pytest.raises(ValueError)), # test correct error is raised if rating is not int
         (("uname", "ggg", None),
          None,
-         ValueError), # test correct error is raised if rating is not int<
+         pytest.raises(ValueError)), # test correct error is raised if rating is not int
         ((555, None, None),
          None,
-         ValueError), # test correct error is raised if username is not str
+         pytest.raises(ValueError)), # test correct error is raised if username is not str
     ],
 )
-def test_create_player(db_session, inputs, expected, exception):
+def test_create_player(db_session, inputs, expected, expectation):
     """
     Test create single player works
     """
     username, num_of_matches, rating = inputs
-    if exception:
-        with pytest.raises(exception):
-            player = Player(
-                username=username,
-            )
-            if num_of_matches:
-                player.num_of_matches = num_of_matches
-            if rating:
-                player.rating = rating
-            db_session.add(player)
-            db_session.commit()
-    else:
-        player = Player(
-                username=username,
-            )
+    with expectation:
+        player = Player(username=username)
         if num_of_matches:
             player.num_of_matches = num_of_matches
         if rating:
@@ -94,20 +83,20 @@ def test_create_player(db_session, inputs, expected, exception):
         assert db_player.num_of_matches == exp_num_of_matches
 
 @pytest.mark.parametrize(
-    'inputs, exception',
+    'inputs, expectation',
     [
         #[(username, num_of_matches, rating)], Expected exception,
         (
             [("uname", None, None), ("uname", None, None)],
-            IntegrityError
+            pytest.raises(IntegrityError)
         ), # try to create players with same names
         (
             [("uname1", None, None), ("uname2", None, None), ("uname3", None, None)],
-            None
+            does_not_raise()
         ) # create multiple valid players
     ],
 )
-def test_create_players(db_session, inputs, exception):
+def test_create_players(db_session, inputs, expectation):
     """
     Test create multiple players works
     """
@@ -121,10 +110,7 @@ def test_create_players(db_session, inputs, exception):
             player.rating = rating
         db_session.add(player)
 
-    if exception:
-        with pytest.raises(exception):
-            db_session.commit()
-    else:
+    with expectation:
         db_session.commit()
         assert Player.query.count() == len(inputs)
 
@@ -186,129 +172,108 @@ def test_get_player_json_schema():
     assert schema == expected
 
 @pytest.mark.parametrize(
-    "inputs, expected, exception",
+    "inputs, expected, expectation",
     [
         # (location, time, description, status, rating_shift, team1_score, team2_score)
         (
             ("place", EXAMPLE_DATETIME, None, None, None, None, None),
             ("place", EXAMPLE_DATETIME, None, 0, None, 0, 0),
-            None
+            does_not_raise()
         ), # test match with default values
         (
             ("place", EXAMPLE_DATETIME, "good game", 0, 0, 0, 0),
             ("place", EXAMPLE_DATETIME, "good game", 0, 0, 0, 0),
-            None
+            does_not_raise()
         ), # test match with custom values
         (
             ("", EXAMPLE_DATETIME, "good game", 0, 0, 0, 0),
             None,
-            ValueError
+            pytest.raises(ValueError)
         ), # test 0 length location
         (
             (None, EXAMPLE_DATETIME, "good game", 0, 0, 0, 0),
             None,
-            ValueError
+            pytest.raises(ValueError)
         ), # test no location supplied
         (
             (555, EXAMPLE_DATETIME, "good game", 0, 0, 0, 0),
             None,
-            ValueError
+            pytest.raises(ValueError)
         ), # test location is not string
         (
             ("a"*51, EXAMPLE_DATETIME, "good game", 0, 0, 0, 0),
             None,
-            ValueError
+            pytest.raises(ValueError)
         ), # test location is over 50 chars
         (
             ("place", None, "good game", 0, 0, 0, 0),
             None,
-            ValueError
+            pytest.raises(ValueError)
         ), # test no time supplied
         (
             ("place", "yee", "good game", 0, 0, 0, 0),
             None,
-            ValueError
+            pytest.raises(ValueError)
         ), # test time not datetime
         (
             ("place", EXAMPLE_DATETIME, 555, 0, 0, 0, 0),
             None,
-            ValueError
+            pytest.raises(ValueError)
         ), # test description not string
         (
             ("place", EXAMPLE_DATETIME, "a"*101, 0, 0, 0, 0),
             None,
-            ValueError
+            pytest.raises(ValueError)
         ), # test description over 100 chars
         (
             ("place", EXAMPLE_DATETIME, "good game", "ggg", 0, 0, 0),
             None,
-            ValueError
+            pytest.raises(ValueError)
         ), # test game_status not integer
         (
             ("place", EXAMPLE_DATETIME, "good game", -1, 0, 0, 0),
             None,
-            ValueError
+            pytest.raises(ValueError)
         ), # test game_status under 0
         (
             ("place", EXAMPLE_DATETIME, "good game", 3, 0, 0, 0),
             None,
-            ValueError
+            pytest.raises(ValueError)
         ), # test game_status over 2
         (
             ("place", EXAMPLE_DATETIME, "good game", 0, "ggg", 0, 0),
             None,
-            ValueError
+            pytest.raises(ValueError)
         ), # test rating_shift not int or null
         (
             ("place", EXAMPLE_DATETIME, "good game", 0, 0, -1, 0),
             None,
-            ValueError
+            pytest.raises(ValueError)
         ), # test team1_score negative
         (
             ("place", EXAMPLE_DATETIME, "good game", 0, 0, "ggg", 0),
             None,
-            ValueError
+            pytest.raises(ValueError)
         ), # test team1_score not int
         (
             ("place", EXAMPLE_DATETIME, "good game", 0, 0, 0, -1),
             None,
-            ValueError
+            pytest.raises(ValueError)
         ), # test team2_score negative
         (
             ("place", EXAMPLE_DATETIME, "good game", 0, 0, 0, "ggg"),
             None,
-            ValueError
+            pytest.raises(ValueError)
         ), # test team2_score not int
     ]
 )
-def test_create_match(db_session, inputs, expected, exception): # pylint: disable=R0914
+def test_create_match(db_session, inputs, expected, expectation): # pylint: disable=R0914
     """
     Test single match creation
     """
     location, time, description, status, rating_shift, team1_score, team2_score = inputs
-    if exception:
-        with pytest.raises(exception):
-            new_match = Match(
-                location=location,
-                time=time
-            )
-            new_match.rating_shift = rating_shift if rating_shift is not None else None
-            if description:
-                new_match.description = description
-            if status:
-                new_match.status = status
-            if team1_score:
-                new_match.team1_score = team1_score
-            if team2_score:
-                new_match.team2_score = team2_score
-            db_session.add(new_match)
-            db_session.commit()
-
-    else:
-        new_match = Match(
-                location=location,
-                time=time
-            )
+    with expectation:
+        new_match = Match(location=location, time=time)
         if rating_shift is not None:
             new_match.rating_shift = rating_shift
         if description:
@@ -319,6 +284,7 @@ def test_create_match(db_session, inputs, expected, exception): # pylint: disabl
             new_match.team1_score = team1_score
         if team2_score:
             new_match.team2_score = team2_score
+
         db_session.add(new_match)
         db_session.commit()
         assert Match.query.count() == 1
@@ -331,7 +297,7 @@ def test_create_match(db_session, inputs, expected, exception): # pylint: disabl
             exp_rating_shift,
             exp_team1_score,
             exp_team2_score
-            ) = expected
+        ) = expected
 
         db_match = Match.query.first()
         assert db_match.id == 1
@@ -342,7 +308,6 @@ def test_create_match(db_session, inputs, expected, exception): # pylint: disabl
         assert db_match.rating_shift == exp_rating_shift
         assert db_match.team1_score == exp_team1_score
         assert db_match.team2_score == exp_team2_score
-
 
 @pytest.mark.parametrize(
     "inputs",
