@@ -1,14 +1,16 @@
 """
 App factory module for creating the application.
 """
-from typing import Union
+from typing import Union, Tuple
 
 from flask import Flask
+from werkzeug.exceptions import HTTPException
 
 from .authentication import Keyring
 from .extensions import (
     db,
-    api
+    api,
+    auth
 )
 from .resources.player import (
     PlayerConverter,
@@ -39,6 +41,7 @@ def create_app(config_obj: Union[object, str] = "config.Config") -> Flask:
     register_converters(app)
     register_resources()
     register_extensions(app)
+    register_error_handlers(app)
 
     # Initialize keyring and create database tables if they do not exist yet
     with app.app_context():
@@ -91,3 +94,47 @@ def register_extensions(app: Flask):
 
     db.init_app(app)
     api.init_app(app)
+
+
+def register_error_handlers(app: Flask):
+    """
+    Register error handlers that return JSON responses for errors instead of the default plain text.
+
+    :param app: Flask app to register the error handlers for.
+    """
+
+    def build_response(error_code: int, message: str) -> Tuple[dict, int]:
+        """
+        Build JSON response for an error.
+
+        :param error_code: HTTP error code of the error.
+        :param message: The error message.
+        :return: Tuple containing the JSON response and HTTP status code.
+        """
+        return {"message": message}, error_code
+
+    @auth.error_handler
+    def handle_auth_error(error_code: int) -> Tuple[dict, int]:
+        """
+        Handle authentication errors, meaning HTTP401 for invalid API token and HTTP403 if the
+        token is valid but is not authorized to complete a request.
+
+        :param error_code: Error code of the error.
+        :return: Tuple containing a JSON response and the HTTP status code.
+        """
+        if error_code == 401:
+            message = "Invalid API token."
+        else:
+            message = "Insufficient credentials for the request."
+
+        return build_response(error_code, message)
+
+    @app.errorhandler(HTTPException)
+    def handle_generic_error(error: HTTPException) -> Tuple[dict, int]:
+        """
+        Handle all generic HTTP errors.
+
+        :param error: The HTTP error.
+        :return: Tuple containing a JSON response and the HTTP status code.
+        """
+        return build_response(error.code, error.description)
