@@ -23,7 +23,7 @@ from .utils import str_to_bool, validate_put_request_properties, fetch_validatio
 
 class PlayerItem(Resource):
     """
-    Represents a singe Player resource and its HTTP methods in the API.
+    Represents a single Player resource and its HTTP methods in the API.
     PlayerConverter is used to pair a username to an actual Player object during requests.
     HTTP404 is raised if a Player with username does not exist.
     """
@@ -58,7 +58,7 @@ class PlayerItem(Resource):
 
         :param player: The Player object to modify.
         :return: HTTP200 response with the modified Player object path in Location header.
-        :raises: BadRequest HTTP400 error if the object fields are invalid.
+        :raises BadRequest: HTTP400 error if the object fields are invalid.
         """
         validate_put_request_properties(Player.json_schema(), request.json)
         player.deserialize(request.json)
@@ -93,7 +93,7 @@ class PlayerCollection(Resource):
         POST method handler to create a new Player object into the database.
 
         :return: HTTP201 response with the created object path in Location header.
-                 HTTP400 response if the provided data is not valid.
+        :raises BadRequest: HTTP400 error if the provided data is not valid.
         """
         try:
             validate(request.json, Player.json_schema())

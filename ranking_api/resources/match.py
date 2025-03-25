@@ -25,7 +25,7 @@ from .utils import validate_put_request_properties, fetch_validation_error_messa
 
 class MatchItem(Resource):
     """
-    Represents a singe Match resource and its HTTP methods in the API.
+    Represents a single Match resource and its HTTP methods in the API.
     MatchConverter is used to pair an ID to an actual Match object during requests.
     HTTP404 is raised if a Match with ID does not exist.
     """
@@ -61,7 +61,7 @@ class MatchItem(Resource):
 
         :param match: The Match object to modify.
         :return: HTTP200 response with the modified Match object path in Location header.
-        :raises: BadRequest HTTP400 error if the object fields are invalid.
+        :raises BadRequest: HTTP400 error if the object fields are invalid.
         """
         validate_put_request_properties(Match.json_schema(), request.json)
         match.deserialize(request.json)
@@ -91,7 +91,7 @@ class MatchCollection(Resource):
         POST method handler to create a new Match object into the database.
 
         :return: HTTP201 response with the created object path in Location header.
-                 HTTP400 response if the provided data is not valid.
+        :raises BadRequest: HTTP400 error if the provided data is not valid.
         """
         try:
             validate(request.json, Match.json_schema(), format_checker=D7Validator.FORMAT_CHECKER)
