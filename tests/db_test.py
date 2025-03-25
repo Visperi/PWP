@@ -2,6 +2,7 @@
 Module for testing database models
 """
 import datetime
+import uuid
 from contextlib import nullcontext as does_not_raise
 
 import pytest
@@ -10,8 +11,20 @@ from sqlalchemy import event
 from sqlalchemy.exc import IntegrityError
 
 from ranking_api.models import Player, Match, MatchPlayerRelation
+from ranking_api.secret_models import ApiToken
 
 EXAMPLE_DATETIME = datetime.datetime(2001, 9, 11, 15, 46, 0)
+
+def get_time(timedelta_hours = 0):
+    """
+    Get a datetime object with current time and timedelta in hours applied to it.
+
+    :param timedelta_hours: Timedelta in hours to current time.
+                            Defaults to 0 and gives the current time.
+    :return: Datetime object with timedelta applied.
+    """
+    return datetime.datetime.now(datetime.timezone.utc) + datetime.timedelta(hours=timedelta_hours)
+
 
 @event.listens_for(Engine, "connect")
 def set_sqlite_pragma(dbapi_connection, connection_record): # pylint: disable=W0613
@@ -424,7 +437,7 @@ def test_get_match_json_schema():
 )
 def test_match_deserialize(inputs, expected): # pylint: disable=R0914
     """
-    Test match deserialization 
+    Test match deserialization
     """
     new_match = Match(
         location="weird place",
@@ -625,3 +638,77 @@ def test_match_serialize_include_players(db_session):
         ]
     assert match_data["location"] == "place"
     assert match_data["players"] == expected
+
+
+@pytest.mark.parametrize("token, user, expires_in, created_at, expectation", (
+        ("token", "testing", get_time(), get_time(), does_not_raise()),
+        ("token", "testing", None, get_time(), does_not_raise()),
+        (uuid.uuid4(), "testing", None, get_time(), pytest.raises(ValueError)),
+        (None, "testing", None, get_time(), pytest.raises(ValueError)),
+        (" ", "testing", None, get_time(), pytest.raises(ValueError)),
+        ("token", None, None, get_time(), pytest.raises(ValueError)),
+        ("token", "testing", "gsdjf", get_time(), pytest.raises(ValueError)),
+        ("token", "testing", get_time(), None, pytest.raises(ValueError))
+))
+def test_create_api_token(db_session, token, user, expires_in, created_at, expectation):  # pylint: disable=R0913,R0917
+    """
+    Test creating an ApiToken works and raises ValueError with invalid values.
+    """
+    with expectation:
+        token = ApiToken(token=token,
+                         user=user,
+                         expires_in=expires_in,
+                         created_at=created_at)
+        db_session.add(token)
+        db_session.commit()
+
+def test_api_token_duplicate_user_raises(db_session):
+    """
+    Test that creating ApiToken with non-unique user raises an error.
+    """
+    token = ApiToken(token="token",
+                     user="testing",
+                     expires_in=get_time(),
+                     created_at=get_time())
+    token2 = ApiToken(token="token2",
+                      user=token.user,
+                      expires_in=get_time(),
+                      created_at=get_time())
+
+    db_session.add(token)
+    db_session.add(token2)
+
+    with pytest.raises(IntegrityError):
+        db_session.commit()
+
+
+def test_api_token_is_expired(db_session):
+    """
+    Test that ApiToken.is_expired works as a hybrid property.
+    """
+    infinitely_valid_token = ApiToken(token=str(uuid.uuid4()),
+                                      user="user1",
+                                      expires_in=None,
+                                      created_at=get_time())
+    valid_token = ApiToken(token=str(uuid.uuid4()),
+                           user="user2",
+                           expires_in=get_time(1),
+                           created_at=get_time())
+    expired_token = ApiToken(token=str(uuid.uuid4()),
+                             user="user3",
+                             expires_in=get_time(-1),
+                             created_at=get_time())
+
+    db_session.add(infinitely_valid_token)
+    db_session.add(valid_token)
+    db_session.add(expired_token)
+    db_session.commit()
+
+    infinitely_valid_token = ApiToken.query.filter_by(token=infinitely_valid_token.token).first()
+    valid_token = ApiToken.query.filter_by(token=valid_token.token).first()
+    expired_token = ApiToken.query.filter_by(token=expired_token.token).first()
+
+    assert ApiToken.query.count() == 3
+    assert infinitely_valid_token.is_expired is False
+    assert valid_token.is_expired is False
+    assert expired_token.is_expired is True

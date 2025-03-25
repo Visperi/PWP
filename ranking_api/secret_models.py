@@ -4,6 +4,7 @@ Definitions for models stored in separate secret database.
 from datetime import datetime, timezone
 
 from sqlalchemy.ext.hybrid import hybrid_property
+from sqlalchemy.orm import validates
 
 from ranking_api.extensions import db
 
@@ -23,10 +24,45 @@ class ApiToken(db.Model):
     def __str__(self):
         return self.token
 
+    @validates("token", "user")
+    def validate_string_fields(self, key, value):
+        """
+        Validate assigned string properties.
+
+        :param key: Name of the property.
+        :param value: Value assigned to the property.
+        :return: Value of the property if valid.
+        :raises ValueError: If the value is not a string or contains no textual data.
+        """
+        if not isinstance(value, str):
+            raise ValueError(f"{key} must be a string.")
+        if not value.strip():
+            raise ValueError(f"{key} must have non-empty content.")
+        return value
+
+    @validates("expires_in", "created_at")
+    def validate_datetime_fields(self, key, value):
+        """
+        Validate assigned datetime properties. Accepts null values for nullable properties.
+
+        :param key: Name of the property.
+        :param value: Value assigned to the property.
+        :return: The value if valid.
+        :raises ValueError: If the value is not datetime object.
+        """
+        if isinstance(value, datetime) or (key == "expires_in" and value is None):
+            return value
+
+        raise ValueError(f"{key} must be a datetime object.")
+
     @hybrid_property
     def is_expired(self):
         """
         True if the token is expired, False otherwise. Always False for
         nullified expires_in values.
         """
-        return self.expires_in is not None and datetime.now(timezone.utc) > self.expires_in
+        if self.expires_in is None:
+            return False
+
+        current_time = datetime.now(timezone.utc).replace(tzinfo=None)
+        return self.expires_in < current_time
