@@ -68,6 +68,11 @@ class ApiToken(db.Model):
         return self.expires_in < current_time
 
     def serialize(self):
+        """
+        Serialize an ApiToken object.
+
+        :return: The ApiToken object serialized as dictionary.
+        """
         return {"token": self.token,
                 "user": self.user,
                 "expires_in": str(self.expires_in),
