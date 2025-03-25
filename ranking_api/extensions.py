@@ -9,5 +9,5 @@ from flask_httpauth import HTTPTokenAuth
 
 
 db = SQLAlchemy()
-api = Api()
+api = Api(prefix="/api")
 auth = HTTPTokenAuth(scheme="Bearer")
