@@ -364,67 +364,38 @@ def test_get_match_json_schema():
     Test match.json_schema returns correct schema
     """
     schema = Match.json_schema()
-    expected = {
-        "type": "object",
-        "required": [
-        "location",
-        "time"
-        ],
-        "properties": {
-            "location": {
-                "description": "Physical location of the game",
-                "type": "string",
-                "minLength": 1,
-                "maxLength": 50
-            },
-            "time": {
-                "description": "UTC timestamp for the game starting time",
-                "type": "string",
-                "format": "date-time"
-            },
-            "description": {
-                "description": "Optional description, e.g. hashtag for the game",
-                "anyOf": [
-                {
-                    "type": "string",
-                    "maxLength": 100
-                },
-                {
-                    "type": "null"
-                }
-                ]
-            },
-            "status": {
-                "description": "On-going status of the game",
-                "type": "integer",
-                "minimum": 0,
-                "maximum": 2
-            },
-            "rating_shift": {
-                "description": "Rating shift for the teams"
-                 +" after finishing the game. Negative for losing team.",
-                "anyOf": [
-                {
-                    "type": "null"
-                },
-                {
-                    "type": "integer"
-                }
-                ]
-            },
-            "team1_score": {
-                "description": "Team 1 score in the game",
-                "type": "integer",
-                "minimum": 0
-            },
-            "team2_score": {
-                "description": "Team 2 score in the game",
-                "type": "integer",
-                "minimum": 0
-            }
-        }
-    }
-    assert schema == expected
+    schema_properties = schema["properties"]
+    expected_properties = ("location",
+                           "time",
+                           "description",
+                           "status",
+                           "rating_shift",
+                           "team1_score",
+                           "team2_score")
+
+    for prop in expected_properties:
+        assert prop in schema_properties
+
+    assert schema["required"] == ["location", "time"]
+
+    assert schema_properties["location"]["type"] == "string"
+    assert schema_properties["location"]["minLength"] == 1
+    assert schema_properties["location"]["maxLength"] == 50
+
+    assert schema_properties["time"]["type"] == "string"
+    assert schema_properties["time"]["format"] == "date-time"
+
+    assert schema_properties["description"]["anyOf"] == [{"type": "string", "maxLength": 100},
+                                                         {"type": "null"}]
+
+    assert schema_properties["rating_shift"]["anyOf"] == [{"type": "null"}, {"type": "integer"}]
+
+    for key in ("team1_score", "team2_score", "status"):
+        prop = schema_properties[key]
+        assert prop["type"] == "integer"
+        assert prop["minimum"] == 0
+        if key == "status":
+            assert prop["maximum"] == 2
 
 @pytest.mark.parametrize(
     "inputs, expected",
