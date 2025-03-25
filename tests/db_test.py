@@ -23,7 +23,8 @@ def get_time(timedelta_hours = 0):
                             Defaults to 0 and gives the current time.
     :return: Datetime object with timedelta applied.
     """
-    return datetime.datetime.now(datetime.timezone.utc) + datetime.timedelta(hours=timedelta_hours)
+    dt = datetime.datetime.now(datetime.timezone.utc) + datetime.timedelta(hours=timedelta_hours)
+    return dt.replace(tzinfo=None)  # SQLite also removes timezone info
 
 
 @event.listens_for(Engine, "connect")
@@ -647,6 +648,27 @@ def test_create_api_token(db_session, token, user, expires_in, created_at, expec
                          created_at=created_at)
         db_session.add(token)
         db_session.commit()
+
+
+def test_api_token_serialize(db_session):
+    """
+    Test the ApiToken object serialization from database object.
+    """
+    token = str(uuid.uuid4())
+    time = get_time()
+
+    db_session.add(ApiToken(token=token,
+                            user="testing",
+                            expires_in=time,
+                            created_at=time))
+    db_session.commit()
+
+    api_token = ApiToken.query.filter_by(user="testing").first()
+    assert api_token.serialize() == {"token": token,
+                                     "user": "testing",
+                                     "expires_in": str(time),
+                                     "created_at": str(time)}
+
 
 def test_api_token_duplicate_user_raises(db_session):
     """

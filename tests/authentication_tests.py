@@ -165,6 +165,22 @@ class TestApiToken:
 
         assert str(api_token) == token
 
+    def test_serialize(self):
+        """
+        Test the ApiToken serialization functionality.
+        """
+
+        current_time = datetime.now(timezone.utc).replace(tzinfo=None)
+        api_token = ApiToken(token="some token",
+                             user="testing",
+                             expires_in=current_time,
+                             created_at=current_time)
+
+        assert api_token.serialize() == {"token": "some token",
+                                         "user": "testing",
+                                         "expires_in": str(current_time),
+                                         "created_at": str(current_time)}
+
     def test_is_expired(self):
         """
         Test the ApiToken.is_expired functionality.
