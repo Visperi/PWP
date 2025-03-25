@@ -66,3 +66,9 @@ class ApiToken(db.Model):
 
         current_time = datetime.now(timezone.utc).replace(tzinfo=None)
         return self.expires_in < current_time
+
+    def serialize(self):
+        return {"token": self.token,
+                "user": self.user,
+                "expires_in": str(self.expires_in),
+                "created_at": str(self.created_at)}
