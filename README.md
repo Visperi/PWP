@@ -14,8 +14,14 @@ run and test the API, the url to the entrypoint and instructions on how to setup
 
 The minimum Python version supported is 3.8. External library dependencies are:
 
-- Flask 3.0.2
-- Flask-SQLAlchemy 3.1.1
+- Flask
+- Flask-RESTful
+- Flask-SQLAlchemy
+- Flask-HTTPAuth
+- jsonschema
+- pylint
+- pytest
+- pytest-cov
 
 The simplest way to install requirements for chosen environment is by command  
 `python -m pip install -r requirements.txt`.
@@ -27,8 +33,12 @@ To run pylint on the project during development, call `pylint --rcfile=.pylintrc
 
 ## Running tests
 
-Run `python -m pytest --cov=ranking_api` in the project root folder to run the pytest tests.
-The tests are located in the tests/ subfolder
+This project contains comprehensive tests to verify the API functionality. The tests are located in the `tests` 
+subfolder.
+
+To run the tests, run `python -m pytest --cov=ranking_api` in the project root folder. To generate an 
+easy-to-read coverage report, add parameter `--cov-report html` to the aforementioned command. The report can then 
+be found in folder `htmlcov`, and can be read by opening `index.html` in browser.
 
 ## Running the application
 
