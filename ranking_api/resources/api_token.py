@@ -7,7 +7,7 @@ from flask_restful import Resource
 from werkzeug.routing import BaseConverter
 from werkzeug.exceptions import Conflict, BadRequest, NotFound
 
-from ranking_api.authentication import auth
+from ranking_api.authentication import auth, UserCollisionError
 from ranking_api.secret_models import ApiToken
 from ranking_api.extensions import db
 
@@ -95,8 +95,10 @@ class ApiTokenCollection(Resource):
         try:
             with current_app.app_context():
                 api_token = keyring.create_token(user)
-        except ValueError as e:
+        except UserCollisionError as e:
             raise Conflict(description=f"Token for user {user} already exists.") from e
+        except ValueError as e:
+            raise BadRequest(str(e)) from e
 
         return api_token.serialize(), 201
 
@@ -119,12 +121,3 @@ class ApiTokenConverter(BaseConverter):
         if api_token is None:
             raise NotFound(description=f"No such API token with user {value}")
         return api_token
-
-    def to_url(self, value: ApiToken) -> str:
-        """
-        Convert an ApiToken object to string containing its user.
-
-        :param value: The ApiToken object.
-        :return: The ApiToken user.
-        """
-        return value.user

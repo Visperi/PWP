@@ -13,6 +13,12 @@ from ranking_api.extensions import auth, db
 from ranking_api.secret_models import ApiToken
 
 
+class UserCollisionError(Exception):
+    """
+    An exception raised when attempting to create an ApiToken with existing user into the Keyring.
+    """
+
+
 class Keyring:
     """
     A keyring object that handles API tokens for the application.
@@ -76,14 +82,15 @@ class Keyring:
 
         :param user: User to create the API token for.
         :return: The newly created ApiToken object.
-        :raises ValueError: If a token for the user already exists or user is not non-empty string.
-                            White space only is considered as an empty string.
+        :raises ValueError: If user is not non-empty string. White space only is considered
+                            as an empty string.
+        :raises UserCollisionError: If a toke n for the user already exists.
         """
         if not isinstance(user, str) or not user.strip():
-            raise ValueError("User must be an instance of non-empty string")
+            raise ValueError("User must be a non-empty string.")
         if self.__get_token_by_user(user):
-            raise ValueError(f"API token for user {user} already exists. Use update_token to "
-                             f"generate a new token for existing ApiToken.")
+            raise UserCollisionError(f"API token for user {user} already exists. Use update_token to "
+                                     f"generate a new token for existing ApiToken.")
 
         api_token = ApiToken(token=str(self.__generate_token()),
                              user=user,

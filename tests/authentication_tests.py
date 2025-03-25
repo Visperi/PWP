@@ -189,11 +189,11 @@ class TestApiToken:
         assert api_token.is_expired is False
 
         expires_in = datetime.now(timezone.utc) - timedelta(seconds=1)
-        api_token = ApiToken(expires_in=expires_in)
+        api_token = ApiToken(expires_in=expires_in.replace(tzinfo=None))
         assert api_token.is_expired is True
 
         expires_in = datetime.now(timezone.utc) + timedelta(seconds=1)
-        api_token = ApiToken(expires_in=expires_in)
+        api_token = ApiToken(expires_in=expires_in.replace(tzinfo=None))
         assert api_token.is_expired is False
 
 class TestApiAuthentication:
@@ -203,6 +203,7 @@ class TestApiAuthentication:
 
     PLAYERS_URL = "/api/players/"
     MATCHES_URL = "/api/matches/"
+    TOKENS_URL = "/api/tokens/"
 
     @pytest.fixture(scope="function")
     def match_id(self, test_app):
@@ -226,15 +227,22 @@ class TestApiAuthentication:
             db.session.commit()
             return player.username
 
+    @pytest.fixture(scope="function")
+    def token_user(self, test_app, auth_header):
+        keyring = test_app.config["KEYRING"]
+        with test_app.app_context():
+            api_token = keyring.create_token("testing")
+            return api_token.user
+
     @pytest.mark.parametrize("url,fixture", (
             (PLAYERS_URL, None),
             (MATCHES_URL, None),
             (PLAYERS_URL, "player_username"),
             (MATCHES_URL, "match_id")
     ))
-    def test_gets_pass_without_auth(self, test_client, url, request, fixture):
+    def test_gets_pass_without_auth(self, test_client, request, url, fixture):
         """
-        Test that GET requests to all resources are successful without providing API token.
+        Test that GET requests to all resources except api_token are successful without providing API token.
         """
         request_url = url
         if fixture:
@@ -242,7 +250,18 @@ class TestApiAuthentication:
 
         assert test_client.get(request_url, follow_redirects=True).status_code == 200
 
-    @pytest.mark.parametrize("url", (PLAYERS_URL, MATCHES_URL))
+    @pytest.mark.parametrize("url, fixture", (
+            (TOKENS_URL, None),
+            (TOKENS_URL, "token_user")
+    ))
+    def test_get_api_tokens_fail_without_auth(self, test_client, url, request, fixture):
+        request_url = url
+        if fixture:
+            request_url += request.getfixturevalue(fixture)
+
+        assert test_client.get(request_url, follow_redirects=True).status_code == 401
+
+    @pytest.mark.parametrize("url", (PLAYERS_URL, MATCHES_URL, TOKENS_URL))
     def test_posts_fail_without_auth(self, test_client, url):
         """
         Test that all POST requests fail without providing API token.
@@ -253,7 +272,8 @@ class TestApiAuthentication:
 
     @pytest.mark.parametrize("url,fixture", (
             (PLAYERS_URL, "player_username"),
-            (MATCHES_URL, "match_id")
+            (MATCHES_URL, "match_id"),
+            (TOKENS_URL, "token_user")
     ))
     def test_deletes_fail_without_auth(self, test_client, request, url, fixture):
         """
@@ -265,19 +285,20 @@ class TestApiAuthentication:
 
         assert test_client.delete(request_url, follow_redirects=True).status_code == 401
 
-    @pytest.mark.parametrize("url", (PLAYERS_URL, MATCHES_URL))
+    @pytest.mark.parametrize("url", (PLAYERS_URL, MATCHES_URL, TOKENS_URL))
     def test_posts_success_with_auth(self, test_client, auth_header, url):
         """
         Test that all POST requests are processed when API token is provided.
         """
 
-        assert test_client.put(url,
-                               headers=auth_header,
-                               follow_redirects=True).status_code != 401
+        assert test_client.post(url,
+                                headers=auth_header,
+                                follow_redirects=True).status_code != 401
 
     @pytest.mark.parametrize("url,fixture", (
             (PLAYERS_URL, "player_username"),
-            (MATCHES_URL, "match_id")
+            (MATCHES_URL, "match_id"),
+            (TOKENS_URL, "token_user")
     ))
     def test_deletes_success_with_auth(self, test_client, auth_header, request, url, fixture):  # pylint: disable=R0913,R0917
         """
@@ -321,3 +342,12 @@ class TestApiAuthentication:
         assert test_client.put(request_url,
                                headers=auth_header,
                                follow_redirects=True).status_code != 401
+
+    def test_patch_fails_without_auth(self, test_client, token_user):
+        assert test_client.patch(self.TOKENS_URL + token_user,
+                                 follow_redirects=True).status_code == 401
+
+    def test_patch_success_with_auth(self, test_client, token_user, auth_header):
+        assert test_client.patch(self.TOKENS_URL + token_user,
+                                 headers=auth_header,
+                                 follow_redirects=True).status_code != 401

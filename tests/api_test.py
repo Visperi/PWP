@@ -3,6 +3,8 @@ Module for testing application api endpoints
 """
 from datetime import datetime, timezone, timedelta
 
+import pytest
+
 import populate_database
 
 
@@ -344,3 +346,85 @@ class TestSeasonModel:
         """Test get season with an id that doesn't exist"""
         response = test_client.get(f"{self.RESOURCE_URL}1337/")
         assert response.status_code == 404
+
+class TestApiTokenModel:
+
+    TOKEN_URL = "/api/tokens/"
+
+    @pytest.mark.parametrize("user, status_code", (
+            (None, 400),  # No user query string
+            ("", 400),
+            (" ", 400)
+    ))
+    def test_create_token_invalid_user_param(self, test_client, auth_header, user, status_code):
+        if user is None:
+            url = self.TOKEN_URL
+            expected_error = "Query parameter user is required to create an API token."
+        else:
+            url = self.TOKEN_URL + f"?user={user}"
+            expected_error = "User must be a non-empty string."
+
+        resp = test_client.post(url, headers=auth_header)
+        assert resp.status_code == status_code
+        assert resp.json["message"] == expected_error
+
+    def test_fetching_nonexistent_token_raises(self, test_client, auth_header):
+        assert test_client.get(self.TOKEN_URL + "nonexistent",
+                               headers=auth_header,
+                               follow_redirects=True).status_code == 404
+
+    def test_create_token(self, test_client, auth_header):
+        assert test_client.post(self.TOKEN_URL + "?user=testing",
+                                headers=auth_header).status_code == 201
+
+    def test_create_token_duplicate_user(self, test_client, auth_header):
+        user = "testing"
+        test_client.post(self.TOKEN_URL + f"?user={user}",
+                         headers=auth_header)
+        assert test_client.post(self.TOKEN_URL + f"?user={user}",
+                                headers=auth_header).status_code == 409
+
+    def test_get_tokens(self, test_client, auth_header):
+        test_client.post(self.TOKEN_URL + "?user=testing",
+                         headers=auth_header)
+        resp = test_client.get(self.TOKEN_URL, headers=auth_header)
+
+        assert resp.status_code == 200
+        assert len(resp.json) == 2  # auth_header also creates one token
+
+    def test_get_token(self, test_client, auth_header):
+        test_client.post(self.TOKEN_URL + "?user=testing",
+                         headers=auth_header)
+        resp = test_client.get(self.TOKEN_URL + "testing",
+                               headers=auth_header,
+                               follow_redirects=True)
+
+        assert resp.status_code == 200
+        assert list(resp.json.keys()) == ["token", "user", "expires_in", "created_at"]
+
+    def test_delete_token(self, test_client, auth_header):
+        user = "testing"
+        test_client.post(self.TOKEN_URL + f"?user={user}",
+                         headers=auth_header)
+        resp = test_client.delete(self.TOKEN_URL + user,
+                                  headers=auth_header,
+                                  follow_redirects=True)
+        remaining_tokens = test_client.get(self.TOKEN_URL,
+                                           headers=auth_header)
+
+        assert resp.status_code == 204
+        assert len(remaining_tokens.json) == 1
+
+    def test_patch_token(self, test_client, auth_header):
+        user = "testing"
+        first_token = test_client.post(self.TOKEN_URL + f"?user={user}",
+                                       headers=auth_header).json
+        resp = test_client.patch(self.TOKEN_URL + user,
+                                 headers=auth_header,
+                                 follow_redirects=True)
+        updated_token = resp.json
+
+        assert resp.status_code == 200
+        assert first_token["token"] != updated_token["token"]
+        assert first_token["created_at"] != updated_token["created_at"]
+        assert first_token["user"] == updated_token["user"]
