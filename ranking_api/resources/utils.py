@@ -14,7 +14,8 @@ def str_to_bool(value: str) -> bool:
 
     :param value: The query parameter value
     :return: True if the parameter lowered is 'true' or False if it is 'false'
-    :raises BadRequest if parameter value is invalid, i.e. not strictly boolean in string format.
+    :raises BadRequest: if parameter value is invalid, i.e. not strictly boolean in string format.
+    :raises AttributeError: If the input is not string type.
     """
     lower = value.lower()
 
@@ -55,7 +56,7 @@ def fetch_validation_error(error: ValidationError):
     return f"Error on value {variable_name}: {error.message}"
 
 
-def validate_put_request_properties(schema, data):
+def validate_put_request_properties(schema: dict, data: dict):
     """
     Validate received object properties for PUT requests. Raise an exception if validation fails.
 
