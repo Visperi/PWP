@@ -20,7 +20,7 @@ from jsonschema import (
 from ranking_api.extensions import api, db
 from ranking_api.authentication import auth
 from ranking_api.models import Match
-from .utils import validate_put_request_properties, fetch_validation_error
+from .utils import validate_put_request_properties, fetch_validation_error_message
 
 
 class MatchItem(Resource):
@@ -96,7 +96,7 @@ class MatchCollection(Resource):
         try:
             validate(request.json, Match.json_schema(), format_checker=D7Validator.FORMAT_CHECKER)
         except ValidationError as e:
-            raise BadRequest(description=fetch_validation_error(e)) from e
+            raise BadRequest(description=fetch_validation_error_message(e)) from e
 
         match = Match()
         match.deserialize(request.json)
@@ -122,7 +122,7 @@ class MatchConverter(BaseConverter):
 
         :param value: The match ID.
         :return: The Match object corresponding to the ID.
-        :raises: NotFound HTTP404 response if a Match object with the ID is not in database.
+        :raises: NotFound HTTP404 error if a Match object with the ID is not in database.
         """
         match = Match.query.filter_by(id=value).first()
         if match is None:

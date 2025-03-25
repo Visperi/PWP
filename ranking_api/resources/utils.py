@@ -41,7 +41,7 @@ def ts_to_datetime(timestamp: str) -> datetime:
         raise BadRequest("Bad datetime format") from exc
 
 
-def fetch_validation_error(error: ValidationError):
+def fetch_validation_error_message(error: ValidationError):
     """
     Fetch a short and useful validation error message from a ValidationError.
     There is no need to send the full message with all field rules to the client.
@@ -59,10 +59,13 @@ def fetch_validation_error(error: ValidationError):
 def validate_put_request_properties(schema: dict, data: dict):
     """
     Validate received object properties for PUT requests. Raise an exception if validation fails.
+    This function temporarily makes all schema properties required, so use only when
+    that is needed.
 
     :param schema: The object schema to validate against.
     :param data: The received request data.
     :return: None if the data is valid, else raise a BadRequest error.
+    :raises: BadRequest HTTP400 error if object field validation fails.
     """
     # Update the schema to require all properties
     schema["required"] = list(schema["properties"].keys())
@@ -73,5 +76,5 @@ def validate_put_request_properties(schema: dict, data: dict):
         if list(data.keys()) != schema["required"]:
             msg = "All object fields are required in PUT requests."
         else:
-            msg = fetch_validation_error(e)
+            msg = fetch_validation_error_message(e)
         raise BadRequest(description=msg) from e
