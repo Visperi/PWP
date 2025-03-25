@@ -18,13 +18,14 @@ class ApiToken(db.Model):
 
     token = db.Column(db.String(36), primary_key=True)
     user = db.Column(db.String(32), nullable=False, unique=True)
+    role = db.Column(db.String(32), nullable=True)
     expires_in = db.Column(db.DateTime, nullable=True)
     created_at = db.Column(db.DateTime, nullable=False)
 
     def __str__(self):
         return self.token
 
-    @validates("token", "user")
+    @validates("token", "user", "role")
     def validate_string_fields(self, key, value):
         """
         Validate assigned string properties.
@@ -34,6 +35,10 @@ class ApiToken(db.Model):
         :return: Value of the property if valid.
         :raises ValueError: If the value is not a string or contains no textual data.
         """
+        if key == "role" and value is None:
+            # Special case for nullable role field
+            return value
+
         if not isinstance(value, str):
             raise ValueError(f"{key} must be a string.")
         if not value.strip():
@@ -75,5 +80,6 @@ class ApiToken(db.Model):
         """
         return {"token": self.token,
                 "user": self.user,
+                "role": self.role,
                 "expires_in": str(self.expires_in),
                 "created_at": str(self.created_at)}

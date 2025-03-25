@@ -63,7 +63,7 @@ class Keyring:
             return None
 
         dev_user = "development admin"
-        return self.__get_token_by_user(dev_user) or self.create_token(dev_user)
+        return self.__get_token_by_user(dev_user) or self.create_token(dev_user, role="super admin")
 
     def get(self, token: str, default: Any = None) -> Union[ApiToken, Any]:
         """
@@ -75,12 +75,13 @@ class Keyring:
         """
         return self._tokens.get(token, default)
 
-    def create_token(self, user: str) -> ApiToken:
+    def create_token(self, user: str, role: str = None) -> ApiToken:
         """
         Create a new API token and add the token into the keyring.
         If current_app is in debug mode, the token is not saved into database.
 
         :param user: User to create the API token for.
+        :param role: Role for the users' token.
         :return: The newly created ApiToken object.
         :raises ValueError: If user is not non-empty string. White space only is considered
                             as an empty string.
@@ -89,11 +90,13 @@ class Keyring:
         if not isinstance(user, str) or not user.strip():
             raise ValueError("User must be a non-empty string.")
         if self.__get_token_by_user(user):
-            raise UserCollisionError(f"API token for user {user} already exists. Use update_token to "
-                                     f"generate a new token for existing ApiToken.")
+            raise UserCollisionError(f"API token for user {user} already exists. "
+                                     f"Use update_token to generate a new token for "
+                                     f"existing ApiToken.")
 
         api_token = ApiToken(token=str(self.__generate_token()),
                              user=user,
+                             role=role,
                              expires_in=None,
                              created_at=datetime.now(timezone.utc))
 
@@ -151,3 +154,15 @@ def verify_token(token: str) -> Optional[ApiToken]:
     """
     keyring = current_app.config["KEYRING"]
     return keyring.get(token)
+
+
+@auth.get_user_roles
+def get_api_token_roles(api_token: ApiToken) -> Optional[str]:
+    """
+    Get ApiToken role after successful authentication.
+
+    :param api_token: ApiToken object returned by the verify_token method
+                      on successful authentication.
+    :return: The ApiToken role as a string, or None if it has no roles.
+    """
+    return api_token.role

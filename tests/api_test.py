@@ -348,6 +348,9 @@ class TestSeasonModel:
         assert response.status_code == 404
 
 class TestApiTokenModel:
+    """
+    Test api_token resource methods.
+    """
 
     TOKEN_URL = "/api/tokens/"
 
@@ -356,7 +359,14 @@ class TestApiTokenModel:
             ("", 400),
             (" ", 400)
     ))
-    def test_create_token_invalid_user_param(self, test_client, auth_header, user, status_code):
+    def test_create_token_invalid_user_param(self,
+                                             test_client,
+                                             auth_header_superadmin,
+                                             user,
+                                             status_code):
+        """
+        Test that creating a new API token with invalid user raises an error.
+        """
         if user is None:
             url = self.TOKEN_URL
             expected_error = "Query parameter user is required to create an API token."
@@ -364,63 +374,79 @@ class TestApiTokenModel:
             url = self.TOKEN_URL + f"?user={user}"
             expected_error = "User must be a non-empty string."
 
-        resp = test_client.post(url, headers=auth_header)
+        resp = test_client.post(url, headers=auth_header_superadmin)
         assert resp.status_code == status_code
         assert resp.json["message"] == expected_error
 
-    def test_fetching_nonexistent_token_raises(self, test_client, auth_header):
+    def test_fetching_nonexistent_token_raises(self, test_client, auth_header_superadmin):
+        """
+        Test that GET request with nonexistent token user raises an error.
+        """
         assert test_client.get(self.TOKEN_URL + "nonexistent",
-                               headers=auth_header,
+                               headers=auth_header_superadmin,
                                follow_redirects=True).status_code == 404
 
-    def test_create_token(self, test_client, auth_header):
+    def test_create_token(self, test_client, auth_header_superadmin):
+        """
+        Test that sending POST request api_token resource correctly creates a new token.
+        """
         assert test_client.post(self.TOKEN_URL + "?user=testing",
-                                headers=auth_header).status_code == 201
+                                headers=auth_header_superadmin).status_code == 201
 
-    def test_create_token_duplicate_user(self, test_client, auth_header):
+    def test_create_token_duplicate_user(self, test_client, auth_header_superadmin):
+        """
+        Test that sending a POST request with existing token user raises an error.
+        """
         user = "testing"
         test_client.post(self.TOKEN_URL + f"?user={user}",
-                         headers=auth_header)
+                         headers=auth_header_superadmin)
         assert test_client.post(self.TOKEN_URL + f"?user={user}",
-                                headers=auth_header).status_code == 409
+                                headers=auth_header_superadmin).status_code == 409
 
-    def test_get_tokens(self, test_client, auth_header):
+    def test_get_tokens(self, test_client, auth_header_superadmin):
+        """
+        Test that GET requests to api_token resource returns list of
+        serialized API tokens or a single serialized API token.
+        """
         test_client.post(self.TOKEN_URL + "?user=testing",
-                         headers=auth_header)
-        resp = test_client.get(self.TOKEN_URL, headers=auth_header)
-
-        assert resp.status_code == 200
-        assert len(resp.json) == 2  # auth_header also creates one token
-
-    def test_get_token(self, test_client, auth_header):
-        test_client.post(self.TOKEN_URL + "?user=testing",
-                         headers=auth_header)
+                         headers=auth_header_superadmin)
         resp = test_client.get(self.TOKEN_URL + "testing",
-                               headers=auth_header,
+                               headers=auth_header_superadmin,
                                follow_redirects=True)
+        all_tokens = test_client.get(self.TOKEN_URL,
+                                     headers=auth_header_superadmin,
+                                     follow_redirects=True)
 
         assert resp.status_code == 200
-        assert list(resp.json.keys()) == ["token", "user", "expires_in", "created_at"]
+        assert all_tokens.status_code == 200
+        assert list(resp.json.keys()) == ["token", "user", "role", "expires_in", "created_at"]
+        assert len(all_tokens.json) == 2  # auth_header fixtures also create tokens
 
-    def test_delete_token(self, test_client, auth_header):
+    def test_delete_token(self, test_client, auth_header_superadmin):
+        """
+        Test that DELETE request to api_token resource correctly deletes an API token.
+        """
         user = "testing"
         test_client.post(self.TOKEN_URL + f"?user={user}",
-                         headers=auth_header)
+                         headers=auth_header_superadmin)
         resp = test_client.delete(self.TOKEN_URL + user,
-                                  headers=auth_header,
+                                  headers=auth_header_superadmin,
                                   follow_redirects=True)
         remaining_tokens = test_client.get(self.TOKEN_URL,
-                                           headers=auth_header)
+                                           headers=auth_header_superadmin)
 
         assert resp.status_code == 204
         assert len(remaining_tokens.json) == 1
 
-    def test_patch_token(self, test_client, auth_header):
+    def test_patch_token(self, test_client, auth_header_superadmin):
+        """
+        Test that PATCH request to api_token resource correctly updates an API token.
+        """
         user = "testing"
         first_token = test_client.post(self.TOKEN_URL + f"?user={user}",
-                                       headers=auth_header).json
+                                       headers=auth_header_superadmin).json
         resp = test_client.patch(self.TOKEN_URL + user,
-                                 headers=auth_header,
+                                 headers=auth_header_superadmin,
                                  follow_redirects=True)
         updated_token = resp.json
 

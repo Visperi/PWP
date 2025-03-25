@@ -11,7 +11,6 @@ from ranking_api.authentication import auth, UserCollisionError
 from ranking_api.secret_models import ApiToken
 from ranking_api.extensions import db
 
-# TODO: Add roles
 
 class ApiTokenItem(Resource):
     """
@@ -21,7 +20,7 @@ class ApiTokenItem(Resource):
     """
 
     @staticmethod
-    @auth.login_required
+    @auth.login_required(role="super admin")
     def get(api_token: ApiToken):
         """
         GET method handler to fetch a serialized ApiToken object from the database.
@@ -33,7 +32,7 @@ class ApiTokenItem(Resource):
         return api_token.serialize()
 
     @staticmethod
-    @auth.login_required
+    @auth.login_required(role="super admin")
     def delete(api_token: ApiToken):
         """
         DELETE method handler to delete an ApiToken object from the database.
@@ -46,7 +45,7 @@ class ApiTokenItem(Resource):
         return Response(status=204)
 
     @staticmethod
-    @auth.login_required
+    @auth.login_required(role="super admin")
     def patch(api_token: ApiToken):
         """
         PATCH method handler to update a token for existing ApiToken object in the database.
@@ -65,7 +64,7 @@ class ApiTokenCollection(Resource):
     """
 
     @staticmethod
-    @auth.login_required
+    @auth.login_required(role="super admin")
     def get():
         """
         GET method handler to fetch collection of ApiToken objects from the database.
@@ -76,14 +75,15 @@ class ApiTokenCollection(Resource):
         return [api_token.serialize() for api_token in api_tokens]
 
     @staticmethod
-    @auth.login_required
+    @auth.login_required(role="super admin")
     def post():
         """
         POST method handler to create a new ApiToken object for a user into the database.
+        User for the token must be specified in query parameter 'user'.
 
         :return: HTTP201 response with the created ApiToken object serialized in the response body.
-                 HTTP400 response if query parameter user is missing.
-                 HTTP409 response if a token for the user already exists.
+        :raises BadRequest: HTTP400 error if user query parameter is missing or is invalid.
+        :raises Conflict: HTTP409 error if a token for the user already exists.
         """
         try:
             user = request.args["user"]

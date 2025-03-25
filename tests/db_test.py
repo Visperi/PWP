@@ -666,6 +666,7 @@ def test_api_token_serialize(db_session):
     api_token = ApiToken.query.filter_by(user="testing").first()
     assert api_token.serialize() == {"token": token,
                                      "user": "testing",
+                                     "role": None,
                                      "expires_in": str(time),
                                      "created_at": str(time)}
 
