@@ -58,16 +58,18 @@ cascade may work in raw SQLite commands but not in Flask-SQLAlchemy.
 - Review requirements for the next deadline (3. api implementation)
 
 ## Meeting 3.
-* **DATE:**
-* **ASSISTANTS:**
+* **DATE:** 20.3.2025
+* **ASSISTANTS:** Iván Sanchez Milara
 
 ### Minutes
 *Summary of what was discussed during the meeting*
 
 ### Action points
-*List here the actions points discussed with assistants*
-
-
+- Add 1 more resource. Maybe season object to attach games to?
+- Next time practical demo/presentation is needed (bring own computer, pipeline run not enough)
+- Statelessness needs to be explained better
+- More documentation for resources
+- Authentication needs an endpoint for getting token
 
 
 ## Meeting 4.
