@@ -3,6 +3,7 @@ Model definitions for the api database
 """
 import datetime
 from sqlalchemy.orm import validates
+from sqlalchemy.ext.hybrid import hybrid_property
 
 from .extensions import db
 from .resources.utils import ts_to_datetime
@@ -344,6 +345,15 @@ class Season(db.Model):
     starting_date = db.Column(db.DateTime, nullable=False)
     end_date = db.Column(db.DateTime, nullable=False)
     matches = db.relationship("Match", back_populates="season", lazy=True)
+
+    @hybrid_property
+    def ongoing(self) -> bool:
+        """
+        Hybrid property indicating if season is currently ongoing
+
+        :return: boolean value indicating if season is ongoing
+        """
+        return self.starting_date <= datetime.datetime.now(datetime.timezone.utc) <= self.end_date
 
     @staticmethod
     def json_schema() -> dict:
