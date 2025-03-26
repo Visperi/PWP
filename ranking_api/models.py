@@ -270,7 +270,7 @@ class Match(db.Model):
         self.rating_shift = data.get('rating_shift')
         self.team1_score = data.get('team1_score', self.TEAM_SCORE_DEFAULT)
         self.team2_score = data.get('team2_score', self.TEAM_SCORE_DEFAULT)
-        
+
 
     def serialize(self, include_players: bool = True) -> dict:
         """
@@ -393,5 +393,3 @@ class Season(db.Model):
             ret.update(matches=[match.serialize() for match in self.matches])
 
         return ret
-
-    
