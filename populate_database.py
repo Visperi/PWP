@@ -75,8 +75,8 @@ def generate_season() -> Season:
 
     :return: A Season model object.
     """
-    starting_date = datetime.now(timezone.utc)
-    end_date = datetime.now(timezone.utc) + timedelta(days=365)
+    starting_date = datetime.now()
+    end_date = datetime.now() + timedelta(days=365)
 
     return Season(starting_date=starting_date,
                   end_date=end_date)
