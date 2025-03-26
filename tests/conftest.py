@@ -4,6 +4,7 @@ Module for creating all the fixtures used in the tests
 All of the fixtures created here can be used inside all test files (check db_test.py for example)
 """
 import pytest
+import populate_database
 from ranking_api.app import create_app
 from ranking_api.extensions import db
 
@@ -23,6 +24,8 @@ def db_session(test_app): # pylint: disable=W0621
     """
     with test_app.app_context():
         db.create_all()
+        new_season = populate_database.generate_season() # insert a single season into database to make season dependent tests work
+        db.session.add(new_season)
         yield db.session
         db.session.rollback()
         db.drop_all()

@@ -4,6 +4,7 @@ Module for testing application api endpoints
 from datetime import datetime, timezone, timedelta
 
 import populate_database
+import pytest
 
 
 class TestPlayerModel:
@@ -123,7 +124,6 @@ class TestPlayerModel:
                                    json=data,
                                    headers=auth_header)
         assert response.status_code == 400
-
 
 class TestMatchModel:
     """
@@ -263,3 +263,85 @@ class TestMatchPlayerRelation:
     def test_leave_match(self, test_client):
         """Test player leaving match"""
         # leave
+
+class TestSeasonModel:
+    """
+    Test season api endpoint behavior
+    """
+
+    RESOURCE_URL = "/api/seasons/"
+
+    def __create_season(self, test_client, auth_header):
+        new_season = populate_database.generate_season()
+        response = test_client.post(self.RESOURCE_URL,
+                                    json=new_season.serialize(),
+                                    headers=auth_header)
+        return new_season, response
+
+    def test_create_season(self, test_client, auth_header):
+        """Test creating a new season"""
+        _, resp = self.__create_season(test_client, auth_header)
+        assert resp.status_code == 201
+
+    def test_create_season_invalid_json(self, test_client, auth_header):
+        """Test create new season with invalid json in request"""
+        new_season, _ = self.__create_season(test_client, auth_header)
+        new_season = new_season.serialize()
+        del new_season["starting_date"]
+        response = test_client.post(
+            self.RESOURCE_URL,
+            json=new_season,
+            headers=auth_header
+            )
+        assert response.status_code == 400
+
+    def test_get_season(self, test_client, auth_header):
+        """Test get single season"""
+        new_season, _ = self.__create_season(test_client, auth_header)
+        response = test_client.get(f"{self.RESOURCE_URL}2/", headers=auth_header)
+        assert response.status_code == 200
+        assert response.json["end_date"] == str(new_season.end_date)
+
+    def test_get_seasons(self, test_client, auth_header):
+        """Test get all seasons"""
+        self.__create_season(test_client, auth_header)
+
+        response = test_client.get(self.RESOURCE_URL)
+        assert response.status_code == 200
+        assert isinstance(response.json, list)
+        assert len(response.json) == 2
+
+    def test_delete_season(self, test_client, auth_header):
+        """Test delete a season (drunk admin favorite)"""
+        response = test_client.delete(f"{self.RESOURCE_URL}1/", headers=auth_header)
+        assert response.status_code == 204
+        resp = test_client.get(self.RESOURCE_URL)
+        assert len(resp.json) == 0
+
+    def test_update_season(self, test_client, auth_header):
+        """Test updating existing season"""
+        new_attrs = {
+            "starting_date": datetime.now(timezone.utc) + timedelta(hours=1),
+            "end_date": datetime.now(timezone.utc) + timedelta(hours=2)
+        }
+
+        new_season, resp = self.__create_season(test_client, auth_header)
+        for attr_name, attr_value in new_attrs.items():
+            setattr(new_season, attr_name, attr_value)
+
+        response = test_client.put(resp.headers["Location"],
+                                   json=new_season.serialize(),
+                                   headers=auth_header)
+        assert response.status_code == 200
+
+        updated_season = test_client.get(resp.headers["Location"]).json
+        for attr_name, attr_value in new_attrs.items():
+            if attr_name == "end_date" or attr_name == "starting_date":
+                assert updated_season[attr_name] == str(attr_value.replace(tzinfo=None))
+            else:
+                assert updated_season[attr_name] == attr_value
+            
+    def test_get_season_invalid_id(self, test_client, auth_header):
+        """Test get season with an id that doesn't exist"""
+        response = test_client.get(f"{self.RESOURCE_URL}1337/")
+        assert response.status_code == 404
