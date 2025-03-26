@@ -4,14 +4,15 @@ Module for populating the database
 
 import string
 import random
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
 
 from wsgi import create_app
 from ranking_api.extensions import db
 from ranking_api.models import (
     Player,
     Match,
-    MatchPlayerRelation
+    MatchPlayerRelation,
+    Season
 )
 
 
@@ -54,6 +55,7 @@ def generate_match() -> Match:
     time = datetime.now(timezone.utc)
     description = random.choice([None, _generate_string(100)])
     status = random.randint(0, 2)
+    season_id = 1
     rating_shift = random.randint(1, 50)
     team1_score = random.randint(0, 16)
     team2_score = random.randint(0, 16)
@@ -62,12 +64,25 @@ def generate_match() -> Match:
                  time=time,
                  description=description,
                  status=status,
+                 season_id=season_id,
                  rating_shift=rating_shift,
                  team1_score=team1_score,
                  team2_score=team2_score)
 
+def generate_season() -> Season:
+    """
+    Generate a season.
+
+    :return: A Season model object.
+    """
+    starting_date = datetime.now()
+    end_date = datetime.now() + timedelta(days=365)
+
+    return Season(starting_date=starting_date,
+                  end_date=end_date)
 
 if __name__ == "__main__":
+    NUM_SEASONS = 1
     NUM_MATCHES = 8
     NUM_PLAYERS = 20
     TEAM_SIZE = 3
@@ -78,10 +93,13 @@ if __name__ == "__main__":
                          f"teams of size {TEAM_SIZE}")
 
     app = create_app()
+    seasons = [generate_season() for _ in range(NUM_SEASONS)]
     matches = [generate_match() for _ in range(NUM_MATCHES)]
     all_players = [generate_player() for _ in range(NUM_PLAYERS)]
-
     with app.app_context():
+        for season in seasons:
+            db.session.add(season)
+        db.session.commit()
         for match in matches:
             team1 = []
             team2 = []
@@ -104,7 +122,6 @@ if __name__ == "__main__":
                 relation = MatchPlayerRelation(team=team)
                 relation.player = player
                 match.players.append(relation)
-
             db.session.add(match)
 
         db.session.commit()

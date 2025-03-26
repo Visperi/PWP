@@ -3,6 +3,7 @@ Model definitions for the api database
 """
 import datetime
 from sqlalchemy.orm import validates
+from sqlalchemy.ext.hybrid import hybrid_property
 
 from .extensions import db
 from .resources.utils import ts_to_datetime
@@ -120,10 +121,13 @@ class Match(db.Model):
     time = db.Column(db.DateTime, nullable=False)
     description = db.Column(db.String(100))
     status = db.Column(db.Integer, default=STATUS_DEFAULT, nullable=False)
+    season_id = db.Column(db.Integer, db.ForeignKey("seasons.id"), nullable=False)
     rating_shift = db.Column(db.Integer)
     team1_score = db.Column(db.Integer, default=TEAM_SCORE_DEFAULT)
     team2_score = db.Column(db.Integer, default=TEAM_SCORE_DEFAULT)
+
     players = db.relationship('MatchPlayerRelation', back_populates='match', lazy='select')
+    season = db.relationship('Season', back_populates='matches')
 
     @validates("location")
     def validate_location(self, key, value):
@@ -171,14 +175,14 @@ class Match(db.Model):
             raise ValueError(f"{key} must be 0, 1 or 2")
         return value
 
-    @validates("rating_shift")
+    @validates("rating_shift", "season_id")
     def validate_rating_shift(self, key, value):
         """
         Validate rating shift
         """
         if value:
             if not isinstance(value, int):
-                raise ValueError(f"{key} shift must be an integer")
+                raise ValueError(f"{key} must be an integer")
         return value
 
     @validates("team1_score", "team2_score")
@@ -245,6 +249,10 @@ class Match(db.Model):
                 "description": "Team 2 score in the game",
                 "type": "integer",
                 "minimum": 0
+            },
+            "season_id": {
+                "description": "Id of the season the game was played on",
+                "type": "integer",
             }
         }
 
@@ -259,9 +267,11 @@ class Match(db.Model):
         self.time = ts_to_datetime(data["time"])  # Convert to datetime or raise BadRequest
         self.description = data.get("description")
         self.status = data.get('status', self.STATUS_DEFAULT)
+        self.season_id = data.get('season_id')
         self.rating_shift = data.get('rating_shift')
         self.team1_score = data.get('team1_score', self.TEAM_SCORE_DEFAULT)
         self.team2_score = data.get('team2_score', self.TEAM_SCORE_DEFAULT)
+
 
     def serialize(self, include_players: bool = True) -> dict:
         """
@@ -274,6 +284,7 @@ class Match(db.Model):
                "time": str(self.time),
                "description": self.description,
                "status": self.status,
+               "season_id": self.season_id,
                "rating_shift": self.rating_shift,
                "team1_score": self.team1_score,
                "team2_score": self.team2_score}
@@ -324,3 +335,71 @@ class MatchPlayerRelation(db.Model):
         player_data = self.player.serialize(include_matches=False)
         player_data.update(team=self.team)
         return player_data
+
+class Season(db.Model):
+    """
+    Database model for seasons. Each match needs to be connected to a Season.
+    """
+    __tablename__ = "seasons"
+    id = db.Column(db.Integer, primary_key=True, unique=True, nullable=False)
+    starting_date = db.Column(db.DateTime, nullable=False)
+    end_date = db.Column(db.DateTime, nullable=False)
+    matches = db.relationship("Match", back_populates="season", lazy=True)
+
+    @hybrid_property
+    def ongoing(self) -> bool:
+        """
+        Hybrid property indicating if season is currently ongoing
+
+        :return: boolean value indicating if season is ongoing
+        """
+        return self.starting_date <= datetime.datetime.now(datetime.timezone.utc) <= self.end_date
+
+    @staticmethod
+    def json_schema() -> dict:
+        """
+        JSON schema for season model
+        """
+        schema = {
+            "type": "object",
+            "required": ["starting_date", "end_date"]
+        }
+        properties = {
+            "starting_date": {
+                "description": "Season starting date",
+                "type": "string",
+                "format": "date-time"
+            },
+            "end_date": {
+                "description": "Season end date",
+                "type": "string",
+                "format": "date-time"
+            }
+        }
+
+        schema.update(properties=properties)
+        return schema
+
+    def deserialize(self, data):
+        """
+        Deserialization method for season data
+        """
+        self.starting_date = ts_to_datetime(data["starting_date"])
+        self.end_date = ts_to_datetime(data["end_date"])
+
+    def serialize(self, include_matches: bool = True):
+        """
+        Serialization method for season data
+
+        :return: Season data serialized
+        """
+        ret = {
+            "id": self.id,
+            "starting_date": str(self.starting_date),
+            "end_date": str(self.end_date),
+        }
+
+        if include_matches:
+            ret.update(matches=[match.serialize() for match in self.matches])
+
+        return ret

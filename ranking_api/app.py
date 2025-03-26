@@ -24,6 +24,12 @@ from .resources.match import (
     MatchItem
 )
 
+from .resources.season import (
+    SeasonConverter,
+    SeasonCollection,
+    SeasonItem
+)
+
 
 def create_app(config_obj: Union[object, str] = "config.Config") -> Flask:
     """
@@ -71,6 +77,7 @@ def register_converters(app: Flask):
     """
     app.url_map.converters["player"] = PlayerConverter
     app.url_map.converters["match"] = MatchConverter
+    app.url_map.converters["season"] = SeasonConverter
 
 
 def register_resources():
@@ -83,6 +90,9 @@ def register_resources():
 
     api.add_resource(MatchCollection, "/matches/")
     api.add_resource(MatchItem, "/matches/<match:match>/")
+
+    api.add_resource(SeasonCollection, "/seasons/")
+    api.add_resource(SeasonItem, "/seasons/<season:season>/")
 
 
 def register_extensions(app: Flask):
