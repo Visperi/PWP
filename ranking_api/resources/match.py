@@ -85,7 +85,7 @@ class MatchCollection(Resource):
         return [match.serialize() for match in matches]
 
     @staticmethod
-    @auth.login_required
+    #@auth.login_required
     def post():
         """
         POST method handler to create a new Match object into the database.

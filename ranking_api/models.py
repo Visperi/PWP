@@ -120,10 +120,10 @@ class Match(db.Model):
     time = db.Column(db.DateTime, nullable=False)
     description = db.Column(db.String(100))
     status = db.Column(db.Integer, default=STATUS_DEFAULT, nullable=False)
+    season_id = db.Column(db.Integer, db.ForeignKey("seasons.id"), nullable=False)
     rating_shift = db.Column(db.Integer)
     team1_score = db.Column(db.Integer, default=TEAM_SCORE_DEFAULT)
     team2_score = db.Column(db.Integer, default=TEAM_SCORE_DEFAULT)
-    season_id = db.Column(db.Integer, db.ForeignKey("seasons.id"), nullable=False)
 
     players = db.relationship('MatchPlayerRelation', back_populates='match', lazy='select')
     season = db.relationship('Season', back_populates='matches')
@@ -174,14 +174,14 @@ class Match(db.Model):
             raise ValueError(f"{key} must be 0, 1 or 2")
         return value
 
-    @validates("rating_shift")
+    @validates("rating_shift", "season_id")
     def validate_rating_shift(self, key, value):
         """
         Validate rating shift
         """
         if value:
             if not isinstance(value, int):
-                raise ValueError(f"{key} shift must be an integer")
+                raise ValueError(f"{key} must be an integer")
         return value
 
     @validates("team1_score", "team2_score")
@@ -248,6 +248,10 @@ class Match(db.Model):
                 "description": "Team 2 score in the game",
                 "type": "integer",
                 "minimum": 0
+            },
+            "season_id": {
+                "description": "Id of the season the game was played on",
+                "type": "integer",
             }
         }
 
@@ -262,9 +266,11 @@ class Match(db.Model):
         self.time = ts_to_datetime(data["time"])  # Convert to datetime or raise BadRequest
         self.description = data.get("description")
         self.status = data.get('status', self.STATUS_DEFAULT)
+        self.season_id = data.get('season_id')
         self.rating_shift = data.get('rating_shift')
         self.team1_score = data.get('team1_score', self.TEAM_SCORE_DEFAULT)
         self.team2_score = data.get('team2_score', self.TEAM_SCORE_DEFAULT)
+        
 
     def serialize(self, include_players: bool = True) -> dict:
         """
@@ -277,6 +283,7 @@ class Match(db.Model):
                "time": str(self.time),
                "description": self.description,
                "status": self.status,
+               "season_id": self.season_id,
                "rating_shift": self.rating_shift,
                "team1_score": self.team1_score,
                "team2_score": self.team2_score}
@@ -378,12 +385,12 @@ class Season(db.Model):
         """
         ret = {
             "id": self.id,
-            "starting_date": self.starting_date,
-            "end_date": self.end_date,
+            "starting_date": str(self.starting_date),
+            "end_date": str(self.end_date),
         }
 
         if include_matches:
-            ret.update(matches=[match.serialize_match() for match in self.matches])
+            ret.update(matches=[match.serialize() for match in self.matches])
 
         return ret
 

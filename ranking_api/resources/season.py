@@ -81,16 +81,16 @@ class SeasonCollection(Resource):
         return [season.serialize() for season in seasons]
 
     @staticmethod
-    @auth.login_required
+    #@auth.login_required
     def post():
         """
         POST method handler ot create a new Season object into the database.
 
         :return: HTTP201 response with the created object path in Location header.
-        :raises BadRequest: HTTP400 erorr if the provided data is not valid.
+        :raises BadRequest: HTTP400 error if the provided data is not valid.
         """
         try:
-            validate(request.sjon, Season.json_schema(), format_checker=D7Validator.FORMAT_CHECKER)
+            validate(request.json, Season.json_schema(), format_checker=D7Validator.FORMAT_CHECKER)
         except ValidationError as e:
             raise BadRequest(description=fetch_validation_error_message(e)) from e
 
@@ -103,7 +103,7 @@ class SeasonCollection(Resource):
         resource_url = api.url_for(SeasonItem, season=season)
         return Response(status=201, headers={"Location": resource_url})
 
-class MatchConverter(BaseConverter):
+class SeasonConverter(BaseConverter):
     """
     A converter class responsible for Season object conversions for SeasonItem methods.
     Converts IDs from requests to Season objects, or vice versa Season objects to IDs.
