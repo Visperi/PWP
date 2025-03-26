@@ -81,7 +81,7 @@ class SeasonCollection(Resource):
         return [season.serialize() for season in seasons]
 
     @staticmethod
-    #@auth.login_required
+    @auth.login_required
     def post():
         """
         POST method handler ot create a new Season object into the database.
