@@ -123,7 +123,10 @@ class Match(db.Model):
     rating_shift = db.Column(db.Integer)
     team1_score = db.Column(db.Integer, default=TEAM_SCORE_DEFAULT)
     team2_score = db.Column(db.Integer, default=TEAM_SCORE_DEFAULT)
+    season_id = db.Column(db.Integer, db.ForeignKey("seasons.id"), nullable=False)
+
     players = db.relationship('MatchPlayerRelation', back_populates='match', lazy='select')
+    season = db.relationship('Season', back_populates='matches')
 
     @validates("location")
     def validate_location(self, key, value):
@@ -324,3 +327,64 @@ class MatchPlayerRelation(db.Model):
         player_data = self.player.serialize(include_matches=False)
         player_data.update(team=self.team)
         return player_data
+
+class Season(db.Model):
+    """
+    Database model for seasons. Each match needs to be connected to a Season.
+    """
+    __tablename__ = "seasons"
+    id = db.Column(db.Integer, primary_key=True, unique=True, nullable=False)
+    starting_date = db.Column(db.DateTime, nullable=False)
+    end_date = db.Column(db.DateTime, nullable=False)
+    matches = db.relationship("Match", back_populates="season", lazy=True)
+
+    @staticmethod
+    def json_schema() -> dict:
+        """
+        JSON schema for season model
+        """
+        schema = {
+            "type": "object",
+            "required": ["starting_date", "end_date"]
+        }
+        properties = {
+            "starting_date": {
+                "description": "Season starting date",
+                "type": "string",
+                "format": "date-time"
+            },
+            "end_date": {
+                "description": "Season end date",
+                "type": "string",
+                "format": "date-time"
+            }
+        }
+
+        schema.update(properties=properties)
+        return schema
+
+    def deserialize(self, data):
+        """
+        Deserialization method for season data
+        """
+        self.starting_date = ts_to_datetime(data["starting_date"])
+        self.end_date = ts_to_datetime(data["end_date"])
+
+    def serialize(self, include_matches: bool = True):
+        """
+        Serialization method for season data
+
+        :return: Season data serialized
+        """
+        ret = {
+            "id": self.id,
+            "starting_date": self.starting_date,
+            "end_date": self.end_date,
+        }
+
+        if include_matches:
+            ret.update(matches=[match.serialize_match() for match in self.matches])
+
+        return ret
+
+    
