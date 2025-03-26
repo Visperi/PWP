@@ -55,7 +55,7 @@ def generate_match() -> Match:
     time = datetime.now(timezone.utc)
     description = random.choice([None, _generate_string(100)])
     status = random.randint(0, 2)
-    season_id = random.randint(1, 2)
+    season_id = 1
     rating_shift = random.randint(1, 50)
     team1_score = random.randint(0, 16)
     team2_score = random.randint(0, 16)
@@ -82,7 +82,7 @@ def generate_season() -> Season:
                   end_date=end_date)
 
 if __name__ == "__main__":
-    NUM_SEASONS = 2
+    NUM_SEASONS = 1
     NUM_MATCHES = 8
     NUM_PLAYERS = 20
     TEAM_SIZE = 3

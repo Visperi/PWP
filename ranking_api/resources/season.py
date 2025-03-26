@@ -127,6 +127,6 @@ class SeasonConverter(BaseConverter):
         Convert a Season object to string containing its ID.
 
         :param value: The Season object.
-        :return: The seson ID as a string.
+        :return: The season ID as a string.
         """
         return str(value.id)
