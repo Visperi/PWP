@@ -13,7 +13,7 @@ from ranking_api.extensions import auth, db
 from ranking_api.secret_models import ApiToken
 
 
-class UserCollisionError(Exception):
+class UserCollisionError(ValueError):
     """
     An exception raised when attempting to create an ApiToken with existing user into the Keyring.
     """
@@ -85,7 +85,7 @@ class Keyring:
         :return: The newly created ApiToken object.
         :raises ValueError: If user is not non-empty string. White space only is considered
                             as an empty string.
-        :raises UserCollisionError: If a toke n for the user already exists.
+        :raises UserCollisionError: If a token for the user already exists.
         """
         if not isinstance(user, str) or not user.strip():
             raise ValueError("User must be a non-empty string.")
