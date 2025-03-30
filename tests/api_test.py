@@ -336,12 +336,12 @@ class TestSeasonModel:
 
         updated_season = test_client.get(resp.headers["Location"]).json
         for attr_name, attr_value in new_attrs.items():
-            if attr_name == "end_date" or attr_name == "starting_date":
+            if attr_name in ("end_date", "starting_date"):
                 assert updated_season[attr_name] == str(attr_value.replace(tzinfo=None))
             else:
                 assert updated_season[attr_name] == attr_value
-            
-    def test_get_season_invalid_id(self, test_client, auth_header):
+
+    def test_get_season_invalid_id(self, test_client):
         """Test get season with an id that doesn't exist"""
         response = test_client.get(f"{self.RESOURCE_URL}1337/")
         assert response.status_code == 404

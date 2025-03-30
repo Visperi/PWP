@@ -24,7 +24,8 @@ def db_session(test_app): # pylint: disable=W0621
     """
     with test_app.app_context():
         db.create_all()
-        new_season = populate_database.generate_season() # insert a single season into database to make season dependent tests work
+        # insert a single season into database to make season dependent tests work
+        new_season = populate_database.generate_season()
         db.session.add(new_season)
         yield db.session
         db.session.rollback()
