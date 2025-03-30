@@ -297,7 +297,6 @@ class TestSeasonModel:
     def test_get_season(self, test_client, auth_header):
         """Test get single season"""
         new_season, _ = self.__create_season(test_client, auth_header)
-        print(str(new_season.end_date), str(new_season.starting_date))
         response = test_client.get(f"{self.RESOURCE_URL}2/", headers=auth_header)
         assert response.status_code == 200
         assert response.json["end_date"] == str(new_season.end_date)

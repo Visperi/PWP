@@ -187,94 +187,94 @@ def test_get_player_json_schema():
 @pytest.mark.parametrize(
     "inputs, expected, expectation",
     [
-        # (location, time, description, status, rating_shift, team1_score, team2_score)
+        # (location, time, description, status, season_id, rating_shift, team1_score, team2_score)
         (
-            ("place", EXAMPLE_DATETIME, None, None, None, None, None),
-            ("place", EXAMPLE_DATETIME, None, 0, None, 0, 0),
+            ("place", EXAMPLE_DATETIME, None, None, 1, None, None, None),
+            ("place", EXAMPLE_DATETIME, None, 0, 1, None, 0, 0),
             does_not_raise()
         ), # test match with default values
         (
-            ("place", EXAMPLE_DATETIME, "good game", 0, 0, 0, 0),
-            ("place", EXAMPLE_DATETIME, "good game", 0, 0, 0, 0),
+            ("place", EXAMPLE_DATETIME, "good game", 0, 1, 0, 0, 0),
+            ("place", EXAMPLE_DATETIME, "good game", 0, 1, 0, 0, 0),
             does_not_raise()
         ), # test match with custom values
         (
-            ("", EXAMPLE_DATETIME, "good game", 0, 0, 0, 0),
+            ("", EXAMPLE_DATETIME, "good game", 0, 1, 0, 0, 0),
             None,
             pytest.raises(ValueError)
         ), # test 0 length location
         (
-            (None, EXAMPLE_DATETIME, "good game", 0, 0, 0, 0),
+            (None, EXAMPLE_DATETIME, "good game", 0, 1, 0, 0, 0),
             None,
             pytest.raises(ValueError)
         ), # test no location supplied
         (
-            (555, EXAMPLE_DATETIME, "good game", 0, 0, 0, 0),
+            (555, EXAMPLE_DATETIME, "good game", 0, 1, 0, 0, 0),
             None,
             pytest.raises(ValueError)
         ), # test location is not string
         (
-            ("a"*51, EXAMPLE_DATETIME, "good game", 0, 0, 0, 0),
+            ("a"*51, EXAMPLE_DATETIME, "good game", 0, 1, 0, 0, 0),
             None,
             pytest.raises(ValueError)
         ), # test location is over 50 chars
         (
-            ("place", None, "good game", 0, 0, 0, 0),
+            ("place", None, "good game", 0, 1, 0, 0, 0),
             None,
             pytest.raises(ValueError)
         ), # test no time supplied
         (
-            ("place", "yee", "good game", 0, 0, 0, 0),
+            ("place", "yee", "good game", 0, 1, 0, 0, 0),
             None,
             pytest.raises(ValueError)
         ), # test time not datetime
         (
-            ("place", EXAMPLE_DATETIME, 555, 0, 0, 0, 0),
+            ("place", EXAMPLE_DATETIME, 555, 0, 1, 0, 0, 0),
             None,
             pytest.raises(ValueError)
         ), # test description not string
         (
-            ("place", EXAMPLE_DATETIME, "a"*101, 0, 0, 0, 0),
+            ("place", EXAMPLE_DATETIME, "a"*101, 0, 1, 0, 0, 0),
             None,
             pytest.raises(ValueError)
         ), # test description over 100 chars
         (
-            ("place", EXAMPLE_DATETIME, "good game", "ggg", 0, 0, 0),
+            ("place", EXAMPLE_DATETIME, "good game", "ggg", 1, 0, 0, 0),
             None,
             pytest.raises(ValueError)
         ), # test game_status not integer
         (
-            ("place", EXAMPLE_DATETIME, "good game", -1, 0, 0, 0),
+            ("place", EXAMPLE_DATETIME, "good game", -1, 1, 0, 0, 0),
             None,
             pytest.raises(ValueError)
         ), # test game_status under 0
         (
-            ("place", EXAMPLE_DATETIME, "good game", 3, 0, 0, 0),
+            ("place", EXAMPLE_DATETIME, "good game", 3, 1, 0, 0, 0),
             None,
             pytest.raises(ValueError)
         ), # test game_status over 2
         (
-            ("place", EXAMPLE_DATETIME, "good game", 0, "ggg", 0, 0),
+            ("place", EXAMPLE_DATETIME, "good game", 0, 1, "ggg", 0, 0),
             None,
             pytest.raises(ValueError)
         ), # test rating_shift not int or null
         (
-            ("place", EXAMPLE_DATETIME, "good game", 0, 0, -1, 0),
+            ("place", EXAMPLE_DATETIME, "good game", 0, 1, 0, -1, 0),
             None,
             pytest.raises(ValueError)
         ), # test team1_score negative
         (
-            ("place", EXAMPLE_DATETIME, "good game", 0, 0, "ggg", 0),
+            ("place", EXAMPLE_DATETIME, "good game", 0, 1, 0, "ggg", 0),
             None,
             pytest.raises(ValueError)
         ), # test team1_score not int
         (
-            ("place", EXAMPLE_DATETIME, "good game", 0, 0, 0, -1),
+            ("place", EXAMPLE_DATETIME, "good game", 0, 1, 0, 0, -1),
             None,
             pytest.raises(ValueError)
         ), # test team2_score negative
         (
-            ("place", EXAMPLE_DATETIME, "good game", 0, 0, 0, "ggg"),
+            ("place", EXAMPLE_DATETIME, "good game", 0, 1, 0, 0, "ggg"),
             None,
             pytest.raises(ValueError)
         ), # test team2_score not int
@@ -284,7 +284,7 @@ def test_create_match(db_session, inputs, expected, expectation): # pylint: disa
     """
     Test single match creation
     """
-    location, time, description, status, rating_shift, team1_score, team2_score = inputs
+    location, time, description, status, season_id, rating_shift, team1_score, team2_score = inputs
     with expectation:
         new_match = Match(location=location, time=time)
         if rating_shift is not None:
@@ -293,6 +293,8 @@ def test_create_match(db_session, inputs, expected, expectation): # pylint: disa
             new_match.description = description
         if status:
             new_match.status = status
+        if season_id:
+            new_match.season_id = season_id
         if team1_score:
             new_match.team1_score = team1_score
         if team2_score:
@@ -307,6 +309,7 @@ def test_create_match(db_session, inputs, expected, expectation): # pylint: disa
             exp_time,
             exp_description,
             exp_status,
+            exp_season_id,
             exp_rating_shift,
             exp_team1_score,
             exp_team2_score
@@ -318,6 +321,7 @@ def test_create_match(db_session, inputs, expected, expectation): # pylint: disa
         assert db_match.time == exp_time
         assert db_match.description == exp_description
         assert db_match.status == exp_status
+        assert db_match.season_id == exp_season_id
         assert db_match.rating_shift == exp_rating_shift
         assert db_match.team1_score == exp_team1_score
         assert db_match.team2_score == exp_team2_score
@@ -327,8 +331,8 @@ def test_create_match(db_session, inputs, expected, expectation): # pylint: disa
     [
         (
             [
-                ("place", EXAMPLE_DATETIME, "good game", 0, 0, 0, 0),
-                ("place", EXAMPLE_DATETIME, "good game", 0, 0, 0, 0),
+                ("place", EXAMPLE_DATETIME, "good game", 0, 1, 0, 0, 0),
+                ("place", EXAMPLE_DATETIME, "good game", 0, 1, 0, 0, 0),
             ]
         ), # test create 2 games
     ]
@@ -371,6 +375,7 @@ def test_get_match_json_schema():
                            "time",
                            "description",
                            "status",
+                           "season_id",
                            "rating_shift",
                            "team1_score",
                            "team2_score")
@@ -454,7 +459,8 @@ def test_match_player_relation(db_session):
     """
     new_match = Match(
         location="place",
-        time=EXAMPLE_DATETIME
+        time=EXAMPLE_DATETIME,
+        season_id=1
     )
     db_session.add(new_match)
     db_session.commit()
@@ -487,7 +493,8 @@ def test_match_player_relation_serialize_match(db_session):
     """
     new_match = Match(
         location="place",
-        time=EXAMPLE_DATETIME
+        time=EXAMPLE_DATETIME,
+        season_id=1
     )
     db_session.add(new_match)
     db_session.commit()
@@ -516,7 +523,8 @@ def test_match_player_relation_serialize_player(db_session):
     """
     new_match = Match(
         location="place",
-        time=EXAMPLE_DATETIME
+        time=EXAMPLE_DATETIME,
+        season_id=1
     )
     db_session.add(new_match)
     db_session.commit()
@@ -545,7 +553,8 @@ def test_player_serialize_include_matches(db_session):
     """
     new_match = Match(
         location="place",
-        time=EXAMPLE_DATETIME
+        time=EXAMPLE_DATETIME,
+        season_id=1
     )
     db_session.add(new_match)
     db_session.commit()
@@ -572,6 +581,7 @@ def test_player_serialize_include_matches(db_session):
          'time': '2001-09-11 15:46:00',
          'description': None,
          'status': 0,
+         'season_id': 1,
          'rating_shift': None,
          'team1_score': 0,
          'team2_score': 0,
@@ -587,7 +597,8 @@ def test_match_serialize_include_players(db_session):
     """
     new_match = Match(
         location="place",
-        time=EXAMPLE_DATETIME
+        time=EXAMPLE_DATETIME,
+        season_id=1
     )
     db_session.add(new_match)
     db_session.commit()
