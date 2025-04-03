@@ -79,7 +79,9 @@ class ApiTokenCollection(Resource):
     def post():
         """
         POST method handler to create a new ApiToken object for a user into the database.
-        User for the token must be specified in query parameter 'user'.
+        User for the token must be specified in query parameter 'user'. Query parameter
+        'role' can optionally be given to give the token a specific role. Default value creates a
+        regular admin token.
 
         :return: HTTP201 response with the created ApiToken object serialized in the response body.
         :raises BadRequest: HTTP400 error if user query parameter is missing or is invalid.
@@ -87,6 +89,7 @@ class ApiTokenCollection(Resource):
         """
         try:
             user = request.args["user"]
+            role = request.args.get("role")
         except KeyError as e:
             msg = "Query parameter user is required to create an API token."
             raise BadRequest(description=msg) from e
@@ -94,7 +97,7 @@ class ApiTokenCollection(Resource):
         keyring = current_app.config["KEYRING"]
         try:
             with current_app.app_context():
-                api_token = keyring.create_token(user)
+                api_token = keyring.create_token(user, role)
         except UserCollisionError as e:
             raise Conflict(description=f"Token for user {user} already exists.") from e
         except ValueError as e:
