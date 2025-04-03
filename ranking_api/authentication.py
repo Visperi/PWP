@@ -81,7 +81,7 @@ class Keyring:
         If current_app is in debug mode, the token is not saved into database.
 
         :param user: User to create the API token for.
-        :param role: Role for the users' token.
+        :param role: A special role for the users' token. None creates a regular token with admin rights.
         :return: The newly created ApiToken object.
         :raises ValueError: If user is not non-empty string. White space only is considered
                             as an empty string.
