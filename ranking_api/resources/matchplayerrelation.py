@@ -47,7 +47,10 @@ class MatchPlayerRelationItem(Resource):
         new_team = int(request.json["team"])
         if not new_team or new_team not in range(3):
             raise BadRequest
-        relation = db.session.get(MatchPlayerRelation, {"match_id": match.id, "username": player.username})
+        relation = db.session.get(
+            MatchPlayerRelation,
+            {"match_id": match.id, "username": player.username}
+            )
         if not relation:
             raise NotFound
         relation.team = new_team
