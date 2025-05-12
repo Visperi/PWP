@@ -30,6 +30,10 @@ from .resources.season import (
     SeasonItem
 )
 
+from .resources.matchplayerrelation import (
+    MatchPlayerRelationItem
+)
+
 
 def create_app(config_obj: Union[object, str] = "config.Config") -> Flask:
     """
@@ -93,6 +97,8 @@ def register_resources():
 
     api.add_resource(SeasonCollection, "/seasons/")
     api.add_resource(SeasonItem, "/seasons/<season:season>/")
+
+    api.add_resource(MatchPlayerRelationItem, "/matches/<match:match>/add_player/")
 
 
 def register_extensions(app: Flask):

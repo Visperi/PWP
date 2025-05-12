@@ -314,6 +314,30 @@ class MatchPlayerRelation(db.Model):
     player = db.relationship("Player", back_populates="matches")
     match = db.relationship("Match", back_populates="players")
 
+    @staticmethod
+    def json_schema() -> dict:
+        schema = {
+            "type": "object",
+            "required": ["username", "match_id"]
+        }
+        properties = {
+            "username": {
+                "description": "Username of the related player",
+                "type": "string",
+            },
+            "match_id": {
+                "description": "Match id of the related match",
+                "type": "integer"
+            },
+            "team": {
+                "description": "Team assigned to the related player",
+                "type": "integer",
+                "minimum": 0
+            }
+        }
+        schema.update(properties=properties)
+        return schema
+
     def serialize_match(self) -> dict:
         """
         Serialize relation data from players perspective and combine it with team satellite data.
