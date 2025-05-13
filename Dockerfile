@@ -10,5 +10,8 @@ COPY . .
 # Install packages specified in requirements.txt
 RUN pip install -r requirements.txt
 
+# Expose port 80
+EXPOSE 80
+
 # Run the application with Gunicorn and enable logging
-CMD ["gunicorn", "-w", "3", "-b", "0.0.0.0", "--log-level", "info", "ranking_api.app:create_app()"]
+CMD ["gunicorn", "-w", "3", "-b", "0.0.0.0:80", "--log-level", "info", "ranking_api.app:create_app()"]
