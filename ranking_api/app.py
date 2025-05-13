@@ -34,6 +34,11 @@ from .resources.season import (
     SeasonItem
 )
 
+from .resources.matchplayerrelation import (
+    MatchPlayerRelationItem,
+    MatchPlayerRelationJoin
+)
+
 
 def create_app(config_obj: Union[object, str] = "config.Config") -> Flask:
     """
@@ -101,6 +106,9 @@ def register_resources():
 
     api.add_resource(ApiTokenCollection, "/tokens/")
     api.add_resource(ApiTokenItem, "/tokens/<api_token:api_token>/")
+    
+    api.add_resource(MatchPlayerRelationJoin, "/matches/<match:match>/add_player/")
+    api.add_resource(MatchPlayerRelationItem, "/matches/<match:match>/<player:player>/")
 
 
 def register_extensions(app: Flask):
