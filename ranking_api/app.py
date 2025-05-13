@@ -51,7 +51,10 @@ def create_app(config_obj: Union[object, str] = "config.Config") -> Flask:
 
     # Initialize keyring and create database tables if they do not exist yet
     with app.app_context():
-        db.create_all()
+        try:
+            db.create_all()
+        except Exception as e:
+            print(f"Error creating database tables: {e}")
         initialize_keyring(app)
 
 
