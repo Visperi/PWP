@@ -46,3 +46,12 @@ def auth_header(test_app):  # pylint: disable=W0621
     with test_app.app_context():
         api_token = test_app.config["KEYRING"].create_token("tests")
         return {"Authorization": f"Bearer {api_token}"}
+
+@pytest.fixture(scope="function")
+def auth_header_superadmin(test_app):  # pylint: disable=W0621
+    """
+    Get super admin Authorization header with a Bearer token for requests.
+    """
+    with test_app.app_context():
+        api_token = test_app.config["KEYRING"].create_token("tests superadmin", role="super admin")
+        return {"Authorization": f"Bearer {api_token}"}

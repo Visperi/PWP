@@ -17,11 +17,15 @@ from .resources.player import (
     PlayerCollection,
     PlayerItem
 )
-
 from .resources.match import (
     MatchConverter,
     MatchCollection,
     MatchItem
+)
+from .resources.api_token import (
+    ApiTokenConverter,
+    ApiTokenCollection,
+    ApiTokenItem
 )
 
 from .resources.season import (
@@ -83,6 +87,7 @@ def register_converters(app: Flask):
     app.url_map.converters["player"] = PlayerConverter
     app.url_map.converters["match"] = MatchConverter
     app.url_map.converters["season"] = SeasonConverter
+    app.url_map.converters["api_token"] = ApiTokenConverter
 
 
 def register_resources():
@@ -99,6 +104,9 @@ def register_resources():
     api.add_resource(SeasonCollection, "/seasons/")
     api.add_resource(SeasonItem, "/seasons/<season:season>/")
 
+    api.add_resource(ApiTokenCollection, "/tokens/")
+    api.add_resource(ApiTokenItem, "/tokens/<api_token:api_token>/")
+    
     api.add_resource(MatchPlayerRelationJoin, "/matches/<match:match>/add_player/")
     api.add_resource(MatchPlayerRelationItem, "/matches/<match:match>/<player:player>/")
 

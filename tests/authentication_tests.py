@@ -7,7 +7,7 @@ from datetime import datetime, timezone, timedelta
 import pytest
 
 from ranking_api.extensions import db
-from ranking_api.authentication import Keyring
+from ranking_api.authentication import Keyring, UserCollisionError
 from ranking_api.secret_models import ApiToken
 from populate_database import generate_match, generate_player
 
@@ -75,7 +75,7 @@ class TestKeyring:
         user = "testing"
         keyring.create_token(user)
 
-        with pytest.raises(ValueError):
+        with pytest.raises(UserCollisionError):
             keyring.create_token(user)
 
     def test_update_token(self, keyring):
@@ -165,6 +165,24 @@ class TestApiToken:
 
         assert str(api_token) == token
 
+    def test_serialize(self):
+        """
+        Test the ApiToken serialization functionality.
+        """
+
+        current_time = datetime.now(timezone.utc).replace(tzinfo=None)
+        api_token = ApiToken(token="some token",
+                             user="testing",
+                             role="my role",
+                             expires_in=current_time,
+                             created_at=current_time)
+
+        assert api_token.serialize() == {"token": "some token",
+                                         "user": "testing",
+                                         "role": "my role",
+                                         "expires_in": str(current_time),
+                                         "created_at": str(current_time)}
+
     def test_is_expired(self):
         """
         Test the ApiToken.is_expired functionality.
@@ -173,11 +191,11 @@ class TestApiToken:
         assert api_token.is_expired is False
 
         expires_in = datetime.now(timezone.utc) - timedelta(seconds=1)
-        api_token = ApiToken(expires_in=expires_in)
+        api_token = ApiToken(expires_in=expires_in.replace(tzinfo=None))
         assert api_token.is_expired is True
 
         expires_in = datetime.now(timezone.utc) + timedelta(seconds=1)
-        api_token = ApiToken(expires_in=expires_in)
+        api_token = ApiToken(expires_in=expires_in.replace(tzinfo=None))
         assert api_token.is_expired is False
 
 class TestApiAuthentication:
@@ -216,9 +234,10 @@ class TestApiAuthentication:
             (PLAYERS_URL, "player_username"),
             (MATCHES_URL, "match_id")
     ))
-    def test_gets_pass_without_auth(self, test_client, url, request, fixture):
+    def test_gets_pass_without_auth(self, test_client, request, url, fixture):
         """
-        Test that GET requests to all resources are successful without providing API token.
+        Test that GET requests to all resources except api_token are successful
+        without providing API token.
         """
         request_url = url
         if fixture:
@@ -255,9 +274,9 @@ class TestApiAuthentication:
         Test that all POST requests are processed when API token is provided.
         """
 
-        assert test_client.put(url,
-                               headers=auth_header,
-                               follow_redirects=True).status_code != 401
+        assert test_client.post(url,
+                                headers=auth_header,
+                                follow_redirects=True).status_code != 401
 
     @pytest.mark.parametrize("url,fixture", (
             (PLAYERS_URL, "player_username"),
@@ -305,3 +324,129 @@ class TestApiAuthentication:
         assert test_client.put(request_url,
                                headers=auth_header,
                                follow_redirects=True).status_code != 401
+
+
+class TestApiTokenApiAuthentication:
+    """
+    Test that api_token resource HTTP methods are
+    correctly processed or not processed with different authorization headers.
+    """
+
+    TOKENS_URL = "/api/tokens/"
+
+    @pytest.fixture(scope="function")
+    def token_user(self, test_app):
+        """
+        Create a token to the test app keyring and get the token user.
+        """
+        keyring = test_app.config["KEYRING"]
+        with test_app.app_context():
+            api_token = keyring.create_token("testing")
+            return api_token.user
+
+    @pytest.mark.parametrize("url, fixture", (
+            (TOKENS_URL, None),
+            (TOKENS_URL, "token_user")
+    ))
+    def test_get_tokens_fail_with_invalid_auth(self,
+                                               test_client,
+                                               auth_header,
+                                               url,
+                                               request,
+                                               fixture):
+        """
+        Test that GET requests to get API tokens are not processed
+        without token or with token without super admin rights.
+        """
+        # pylint: disable=R0917,R0913
+        request_url = url
+        if fixture:
+            request_url += request.getfixturevalue(fixture)
+
+        assert test_client.get(request_url,
+                               follow_redirects=True).status_code == 401
+        assert test_client.get(request_url,
+                               headers=auth_header,
+                               follow_redirects=True).status_code == 403
+
+    def test_create_token_fails_with_invalid_auth(self, test_client, auth_header, token_user):
+        """
+        Test that POST requests to create new APi tokens are not processed without
+        token or with token with no super admin rights.
+        """
+        request_url = self.TOKENS_URL + f"?user{token_user}"
+
+        assert test_client.post(request_url).status_code == 401
+        assert test_client.post(request_url, headers=auth_header).status_code == 403
+
+    def test_delete_token_fails_with_invalid_auth(self, test_client, auth_header, token_user):
+        """
+        Test that DELETE requests to delete API tokens are not processed
+        without token or with token without super admin rights.
+        """
+        request_url = self.TOKENS_URL + token_user
+
+        assert test_client.delete(request_url,
+                                  follow_redirects=True).status_code == 401
+        assert test_client.delete(request_url,
+                                  headers=auth_header,
+                                  follow_redirects=True).status_code == 403
+
+    def test_patch_token_fails_with_invalid_auth(self, test_client, auth_header, token_user):
+        """
+        Test that PATCH requests to update API tokens are not processed without
+        token or with token without super admin rights.
+        """
+        request_url = self.TOKENS_URL + token_user
+
+        assert test_client.patch(request_url,
+                                 follow_redirects=True).status_code == 401
+        assert test_client.patch(request_url,
+                                 headers=auth_header,
+                                 follow_redirects=True).status_code == 403
+
+    @pytest.mark.parametrize("fixture", (None, "token_user"))
+    def test_get_tokens_success_with_auth(self,
+                                          test_client,
+                                          auth_header_superadmin,
+                                          request,
+                                          fixture):
+        """
+        Test that GET requests to get API tokens are processed with super admin token.
+        """
+        request_url = self.TOKENS_URL
+        if fixture:
+            request_url += request.getfixturevalue(fixture)
+
+        resp = test_client.get(request_url, headers=auth_header_superadmin, follow_redirects=True)
+        assert resp.status_code not in [401, 403]
+
+    def test_create_token_success_with_auth(self, test_client, auth_header_superadmin):
+        """
+        Test that POST requests to create new API tokens are processed with super admin token.
+        """
+        resp = test_client.post(self.TOKENS_URL,
+                                headers=auth_header_superadmin,
+                                follow_redirects=True)
+
+        assert resp.status_code not in [401, 403]
+
+    def test_delete_token_success_with_auth(self, test_client, auth_header_superadmin, token_user):
+        """
+        Test that DELETE requests to delete API tokens are processed with super admin token.
+        """
+        resp = test_client.delete(self.TOKENS_URL + token_user,
+                                  headers=auth_header_superadmin,
+                                  follow_redirects=True)
+
+        assert resp.status_code not in [401, 403]
+
+    def test_patch_token_success_with_auth(self, test_client, token_user, auth_header_superadmin):
+        """
+        Test that PATCH requests to update API token are processed with super admin token.
+        """
+        resp = test_client.patch(self.TOKENS_URL + token_user,
+                                 headers=auth_header_superadmin,
+                                 follow_redirects=True)
+
+        assert resp.status_code not in [401, 403]
